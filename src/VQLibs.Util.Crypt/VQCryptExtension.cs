@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,21 +13,52 @@ namespace VQLibs.Util.Crypt
         private const char BYTE_SEPARATOR = '-';
         private const char CHAR_EMPTY = '\0';
 
-        public static byte[] StringToUtf8Byte(string text) => Encoding.UTF8.GetBytes(text);
-        public static byte[] StringToAsciiByte(string text) => Encoding.ASCII.GetBytes(text);
+        public static byte[] StringToUtf8Byte(this string text) => text != null ? Encoding.UTF8.GetBytes(text) : new byte[0];
+        public static string Utf8ByteToString(this byte[] bytes) => bytes != null ? Encoding.UTF8.GetString(bytes) : string.Empty;
+        public static byte[] StringToAsciiByte(this string text) => text != null ? Encoding.ASCII.GetBytes(text) : new byte[0];
+        public static string AsciiByteToString(this byte[] bytes) => bytes != null ? Encoding.ASCII.GetString(bytes) : string.Empty;
 
         public static string GetMd5Hash(this string text) => GetMd5Hash(StringToUtf8Byte(text));
-        public static string GetMd5Hash(this byte[] bytes)
+        public static string GetMd5Hash(this byte[] bytes) => GetHash<MD5CryptoServiceProvider>(bytes);
+
+        public static string GetSha256Hash(this string text) => GetSha256Hash(StringToUtf8Byte(text));
+        public static string GetSha256Hash(this byte[] bytes) => GetHash<HMACSHA256>(bytes);
+
+        public static string EncryptAes(this string text, string key, string iv)
+            => Convert.ToBase64String(Encrypt<AesCryptoServiceProvider>(text.StringToUtf8Byte(), key.StringToUtf8Byte(), iv.StringToUtf8Byte()));
+        public static string DecryptAes(this string crypt, string key, string iv)
+            => Decrypt<AesCryptoServiceProvider>(Convert.FromBase64String(crypt), key.StringToUtf8Byte(), iv.StringToUtf8Byte()).Utf8ByteToString();
+
+        public static byte[] Encrypt<T>(this byte[] bytes, byte[] key, byte[] iv) where T : SymmetricAlgorithm, new()
         {
-            using (var hash = MD5.Create())
-                return GetHash(bytes, hash);
+            using (var alg = new T())
+            {
+                alg.Key = key;
+                alg.IV = iv;
+
+                using (var ms = new MemoryStream())
+                using (var cs = new CryptoStream(ms, alg.CreateEncryptor(), CryptoStreamMode.Write))
+                {
+                    cs.Write(bytes, 0, bytes.Length);
+                    return ms.ToArray();
+                }
+            }
         }
 
-        public static string GetSha256Hash(this string text) => GetMd5Hash(StringToUtf8Byte(text));
-        public static string GetSha256Hash(this byte[] bytes)
+        public static byte[] Decrypt<T>(this byte[] bytes, byte[] key, byte[] iv) where T : SymmetricAlgorithm, new()
         {
-            using (var hash = HMACSHA256.Create())
-                return GetHash(bytes, hash);
+            using (var alg = new T())
+            {
+                alg.Key = key;
+                alg.IV = iv;
+
+                using (var ms = new MemoryStream())
+                using (var cs = new CryptoStream(ms, alg.CreateDecryptor(), CryptoStreamMode.Read))
+                {
+                    cs.Read(bytes, 0, bytes.Length);
+                    return ms.ToArray();
+                }
+            }
         }
 
         public static string GetHashArgon(
@@ -80,12 +112,13 @@ namespace VQLibs.Util.Crypt
             return ret == 0 ? VQEnumVerifyHashOut.PASSED : VQEnumVerifyHashOut.NEEDS_REHASH;
         }
 
-        private static string GetHash(byte[] bytes, HashAlgorithm hashAlgorithm)
+        public static string GetHash<T>(byte[] bytes) where T : HashAlgorithm, new()
         {
-            if (hashAlgorithm.HashSize > 0)
-                hashAlgorithm.Clear();
-            hashAlgorithm.ComputeHash(bytes);
-            return BitConverter.ToString(hashAlgorithm.Hash).Replace(BYTE_SEPARATOR, CHAR_EMPTY);
+            using (var hashAlgorithm = new T())
+            {
+                hashAlgorithm.ComputeHash(bytes);
+                return BitConverter.ToString(hashAlgorithm.Hash).Replace(BYTE_SEPARATOR, CHAR_EMPTY);
+            }
         }
 
         private static byte[] HexStringToByte(string hexString)
