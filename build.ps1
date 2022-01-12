@@ -25,6 +25,6 @@ if( 's' -eq $generate_build ) {
 }
 
 dotnet pack `
-    -o "pack/$version/$configuration" `
+    -o "pack" `
     -c $configuration `
     -p:PackageVersion=$version
