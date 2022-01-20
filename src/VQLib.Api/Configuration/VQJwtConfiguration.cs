@@ -1,8 +1,7 @@
-﻿using System;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using VQLib.Jwt;
 using VQLib.Jwt.Model;
 
@@ -10,13 +9,8 @@ namespace VQLib.Api.Configuration
 {
     public static class VQJwtConfiguration
     {
-        public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+        public static void ConfigureServices(IServiceCollection services, VQJwtDescriptor jwtDescriptor)
         {
-            var jwtDescriptor = new VQJwtDescriptor();
-            configuration.GetSection("JWTDescriptor").Bind(jwtDescriptor);
-
-            var secretKey = configuration.GetSection("JWTSecretKey").Value;
-
             services.AddAuthentication(x =>
                 {
                     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -29,13 +23,13 @@ namespace VQLib.Api.Configuration
                     x.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = secretKey.GetSymmetricSecurityKey(),
+                        IssuerSigningKey = jwtDescriptor.SecretKey.GetSymmetricSecurityKey(),
                         ValidateIssuer = true,
                         ValidIssuer = jwtDescriptor.Issuer,
                         ValidateAudience = true,
                         ValidAudience = jwtDescriptor.Audience,
                         ValidateLifetime = true,
-                        ClockSkew = TimeSpan.FromSeconds(30)
+                        ClockSkew = TimeSpan.FromSeconds(30),
                     };
                 });
         }

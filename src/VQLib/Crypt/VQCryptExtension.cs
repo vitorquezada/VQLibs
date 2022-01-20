@@ -37,7 +37,7 @@ namespace VQLib.Crypt
             return GetHash(bytes, hashAlgorithm);
         }
 
-        public static string GetHash<T>(byte[] bytes, T hashAlgorithm) where T : HashAlgorithm, new()
+        public static string GetHash<T>(this byte[] bytes, T hashAlgorithm) where T : HashAlgorithm, new()
         {
             hashAlgorithm.ComputeHash(bytes);
             return BitConverter.ToString(hashAlgorithm.Hash).Replace(BYTE_SEPARATOR, STRING_EMPTY);
@@ -74,7 +74,7 @@ namespace VQLib.Crypt
         }
 
         public static string GetHashArgon(
-            string text,
+            this string text,
             ulong opsLimite = VQSodiumLibrary.crypto_pwhash_argon2id_OPSLIMIT_MODERATE,
             int memLimit = VQSodiumLibrary.crypto_pwhash_argon2id_MEMLIMIT_MODERATE)
         {
@@ -98,7 +98,7 @@ namespace VQLib.Crypt
         }
 
         public static VQVerifyHashResult VerifyHashArgon(
-            string hash,
+            this string hash,
             string password,
             ulong opsLimite = VQSodiumLibrary.crypto_pwhash_argon2id_OPSLIMIT_MODERATE,
             int memLimit = VQSodiumLibrary.crypto_pwhash_argon2id_MEMLIMIT_MODERATE)
@@ -124,7 +124,7 @@ namespace VQLib.Crypt
             return ret == 0 ? VQVerifyHashResult.PASSED : VQVerifyHashResult.NEEDS_REHASH;
         }
 
-        private static byte[] HexStringToByte(string hexString)
+        private static byte[] HexStringToByte(this string hexString)
         {
             var hashBytes = new byte[hexString.Length / 2];
             for (int i = 0; i < hexString.Length; i += 2)

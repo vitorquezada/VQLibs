@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Http;
-using Microsoft.IdentityModel.Tokens;
 using VQLib.Jwt.Model;
 using VQLib.Util;
 
@@ -15,9 +15,9 @@ namespace VQLib.Jwt
     {
         private const int _3_HOURS_IN_MINUTES = 180;
 
-        public static string GenerateToken(this List<KeyValuePair<string, string>> dictionaryClaims, VQJwtDescriptor tokenDescriptor, string secretKey, int minutesToExpire = _3_HOURS_IN_MINUTES)
+        public static string GenerateToken(this List<KeyValuePair<string, string>> dictionaryClaims, VQJwtDescriptor tokenDescriptor, int minutesToExpire = _3_HOURS_IN_MINUTES)
         {
-            var now = DateTime.UtcNow;
+            var utcNow = DateTime.UtcNow;
 
             var claims = new ClaimsIdentity(dictionaryClaims.Select(x => new Claim(x.Key, x.Value)));
 
@@ -27,9 +27,9 @@ namespace VQLib.Jwt
                 Issuer = tokenDescriptor.Issuer,
                 Audience = tokenDescriptor.Audience,
                 Subject = claims,
-                Expires = now.AddMinutes(minutesToExpire),
-                NotBefore = now,
-                SigningCredentials = GetCredentials(secretKey)
+                Expires = utcNow.AddMinutes(minutesToExpire),
+                NotBefore = utcNow,
+                SigningCredentials = GetCredentials(tokenDescriptor.SecretKey)
             };
 
             var token = tokenHeader.CreateToken(securityTokenDescriptor);

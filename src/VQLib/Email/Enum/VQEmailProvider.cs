@@ -2,6 +2,7 @@
 {
     public enum VQEmailProvider
     {
-        SendGrid
+        SendGrid,
+        SMTP,
     }
 }

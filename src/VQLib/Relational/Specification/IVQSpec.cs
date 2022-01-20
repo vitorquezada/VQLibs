@@ -7,6 +7,6 @@ namespace VQLib.Relational.Specification
     {
         IQueryable<T> Specify(IQueryable<T> query);
 
-        IOrderedQueryable<T> Order(IQueryable<T> query);
+        IOrderedQueryable<T> Order(IQueryable<T> query) => query.OrderBy(x => x.Id);
     }
 }

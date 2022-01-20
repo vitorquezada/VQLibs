@@ -11,8 +11,8 @@ namespace VQLib.Relational.Entity
     {
         public long Id { get; set; }
         public string Key { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public DateTime UpdatedDate { get; set; }
+        public DateTimeOffset CreatedDate { get; set; }
+        public DateTimeOffset UpdatedDate { get; set; }
         public bool Active { get; set; }
     }
 }

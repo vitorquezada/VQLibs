@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using VQLib.Util;
 using VQLib.Validation.Model;
 
 namespace VQLib.Validation
@@ -12,7 +15,6 @@ namespace VQLib.Validation
             VQValidationType type = VQValidationType.Error,
             IEnumerable<string> messageArgs = null)
         {
-            validationItems ??= new List<VQValidationItem>();
             validationItems.Add(new VQValidationItem
             {
                 Message = new VQValidationItemMessage(errorMessage, messageArgs),
@@ -26,6 +28,11 @@ namespace VQLib.Validation
         public static string GetPropertyName(this string propertyName, string prefixPropertyName = null, string sufixPropertyName = null)
         {
             return $"{prefixPropertyName ?? string.Empty}{propertyName ?? string.Empty}{sufixPropertyName ?? string.Empty}";
+        }
+
+        public static string GetPropertyName<T>(Expression<Func<T, object>> propertyName, string prefixPropertyName = null, string sufixPropertyName = null)
+        {
+            return $"{prefixPropertyName ?? string.Empty}{propertyName.GetMemberName() ?? string.Empty}{sufixPropertyName ?? string.Empty}";
         }
     }
 }

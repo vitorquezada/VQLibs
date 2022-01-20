@@ -17,11 +17,6 @@ namespace VQLib.Relational.Specification
             _keyIsCaseSensitive = keyIsCaseSensitive;
         }
 
-        public virtual IOrderedQueryable<T> Order(IQueryable<T> query)
-        {
-            return query.OrderBy(x => x.Id);
-        }
-
         public virtual IQueryable<T> Specify(IQueryable<T> query)
         {
             return _keyIsCaseSensitive

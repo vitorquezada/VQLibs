@@ -14,11 +14,6 @@ namespace VQLib.Relational.Specification
             _ids = ids ?? Array.Empty<long>();
         }
 
-        public IOrderedQueryable<T> Order(IQueryable<T> query)
-        {
-            return query.OrderBy(x => x.Id);
-        }
-
         public IQueryable<T> Specify(IQueryable<T> query)
         {
             return query.Where(x => _ids.Contains(x.Id));

@@ -1,17 +1,18 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using SendGrid;
 using SendGrid.Helpers.Mail;
+using System;
+using System.Threading.Tasks;
 using VQLib.Email.Enum;
 using VQLib.Email.Model;
 using VQLib.Util;
 
 namespace VQLib.Email.Provider
 {
-    public class VQSendGridEmailService : IVQEmailService
+    public class VQSendGridEmailService : VQBaseEmailService, IVQEmailService
     {
         public VQEmailProvider GetEmailProvider => VQEmailProvider.SendGrid;
+
         private string SendGridToken => _configuration.GetSection("SendGridConfig:Token").Value;
 
         private readonly IConfiguration _configuration;
@@ -23,32 +24,27 @@ namespace VQLib.Email.Provider
 
         public async Task<VQSendEmailResult> SendEmail(VQEmail email)
         {
-            if (email == null || email.From == null || !email.To.ListHasItem(x => !x.Email.IsNullOrWhiteSpace()))
-            {
-                throw new Exception("Email not found!");
-            }
+            ValidateEmail(email);
 
             var client = new SendGridClient(SendGridToken);
             var msg = new SendGridMessage()
             {
-                From = new EmailAddress(email.From.Email, email.From.Name),
+                From = new EmailAddress(email.From.Email, email.From.Name.IsNullOrWhiteSpaceOr(email.From.Email)),
                 Subject = email.Subject,
                 HtmlContent = email.Body
             };
-            foreach (var to in email.To)
+
+            if (email.To.ListHasItem())
+                email.To.ForEach(x => msg.AddTo(new EmailAddress(x.Email, x.Name.IsNullOrWhiteSpaceOr(x.Email))));
+
+            if (email.Attachments.ListHasItem())
             {
-                if (to.Email.IsNullOrWhiteSpace())
-                    continue;
-                msg.AddTo(new EmailAddress(to.Email, to.Name));
-            }
-            foreach (var attachment in email.Attachments)
-            {
-                msg.AddAttachment(new Attachment()
+                email.Attachments.ForEach(x => msg.AddAttachment(new Attachment
                 {
-                    Content = Convert.ToBase64String(attachment.Content),
-                    Type = attachment.Type,
-                    Filename = attachment.Name
-                });
+                    Content = Convert.ToBase64String(x.Content),
+                    Type = x.Type,
+                    Filename = x.Name
+                }));
             }
 
             var response = await client.SendEmailAsync(msg);

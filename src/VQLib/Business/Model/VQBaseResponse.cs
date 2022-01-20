@@ -1,13 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using VQLib.Util;
 using VQLib.Validation;
 using VQLib.Validation.Model;
 
 namespace VQLib.Business.Model
 {
-    public class VQBaseResponse<T>
+    public class VQBaseResponse<T> : VQBaseResponse
     {
-        public VQBaseResponse()
+        public VQBaseResponse() : base()
         {
         }
 
@@ -17,14 +19,30 @@ namespace VQLib.Business.Model
         }
 
         public T Data { get; set; }
+
+        public string GetPropertyName(Expression<Func<T, object>> property, string prefix = null, string sufix = null)
+            => $"{prefix ?? string.Empty}{property.GetMemberName()}{sufix ?? string.Empty}";
+    }
+
+    public class VQBaseResponse
+    {
+        public VQBaseResponse()
+        {
+        }
+
         public List<VQValidationItem> Validations { get; private set; }
+
         public bool HasErrorValidations { get => Validations.ListHasItem(x => x.Type == VQValidationType.Error); }
+
         public bool HasInfoValidations { get => Validations.ListHasItem(x => x.Type == VQValidationType.Info); }
+
         public bool HasWarningValidations { get => Validations.ListHasItem(x => x.Type == VQValidationType.Warning); }
+
         public bool HasValidations { get => Validations.ListHasItem(); }
 
         public void AddValidationItem(string errorMessage, string propertyName, VQValidationType type = VQValidationType.Error, IEnumerable<string> messageArgs = null)
         {
+            Validations ??= new List<VQValidationItem>();
             Validations.AddValidationItem(errorMessage, propertyName, type, messageArgs);
         }
 

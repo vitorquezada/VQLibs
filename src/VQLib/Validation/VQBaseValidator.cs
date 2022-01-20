@@ -9,7 +9,10 @@ namespace VQLib.Validation
 {
     public abstract class VQBaseValidator<T>
     {
-        public abstract Task<List<VQValidationItem>> Validate(T model, string prefixPropertyName = null, string sufixPropertyName = null);
+        public virtual Task<List<VQValidationItem>> Validate(T model, string prefixPropertyName = null, string sufixPropertyName = null)
+        {
+            return Task.FromResult(new List<VQValidationItem>());
+        }
 
         public virtual List<VQValidationItem> ValidateSync(T model, string prefixPropertyName = null, string sufixPropertyName = null)
         {
