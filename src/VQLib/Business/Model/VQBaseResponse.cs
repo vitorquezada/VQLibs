@@ -30,7 +30,7 @@ namespace VQLib.Business.Model
         {
         }
 
-        public List<VQValidationItem> Validations { get; private set; }
+        public List<VQValidationItem> Validations { get; private set; } = new List<VQValidationItem>();
 
         public bool HasErrorValidations { get => Validations.ListHasItem(x => x.Type == VQValidationType.Error); }
 
@@ -49,7 +49,9 @@ namespace VQLib.Business.Model
         public void AddValidationResult(List<VQValidationItem> validationResult)
         {
             Validations ??= new List<VQValidationItem>();
-            Validations.AddRange(validationResult);
+
+            if (validationResult.ListHasItem())
+                Validations.AddRange(validationResult);
         }
     }
 }

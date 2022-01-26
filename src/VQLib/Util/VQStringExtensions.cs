@@ -137,5 +137,16 @@ namespace VQLib.Util
 
             return cnpj.EndsWith(digito);
         }
+
+        public static string GetMaskedEmail(this string email)
+        {
+            const string group1 = @"(?<=[\w]{1})[\S]*(?=[\w]{1}@)";
+            const string group2 = @"(?<=@[\w]{1})[\S]*?(?=[\w]{1}\.)";
+
+            if (email.IsNullOrWhiteSpace())
+                return email;
+
+            return Regex.Replace(Regex.Replace(email, group1, m => new string('*', m.Length)), group2, m => new string('*', m.Length));
+        }
     }
 }
