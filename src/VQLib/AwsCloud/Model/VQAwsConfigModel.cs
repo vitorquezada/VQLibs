@@ -1,8 +1,8 @@
 ﻿using Amazon;
 
-namespace VQLib.Storage
+namespace VQLib.AwsCloud.Model
 {
-    public class VQS3StorageConfigModel
+    public class VQAwsConfigModel
     {
         public RegionEndpoint Region { get; set; }
 

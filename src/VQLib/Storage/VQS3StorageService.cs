@@ -4,6 +4,7 @@ using Amazon.S3.Transfer;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using VQLib.AwsCloud.Model;
 using VQLib.Util;
 
 namespace VQLib.Storage
@@ -12,9 +13,9 @@ namespace VQLib.Storage
     {
         private const string S3_URL_FORMAT = "https://s3.amazonaws.com/{0}{1}";
 
-        private readonly VQS3StorageConfigModel _configModel;
+        private readonly VQAwsConfigModel _configModel;
 
-        public VQS3StorageService(VQS3StorageConfigModel configModel)
+        public VQS3StorageService(VQAwsConfigModel configModel)
         {
             _configModel = configModel;
         }

@@ -19,4 +19,9 @@
     <PackageReference Include="X.PagedList" Version="8.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Notification\" />
+    <Folder Include="Queue\" />
+  </ItemGroup>
+
 </Project>
