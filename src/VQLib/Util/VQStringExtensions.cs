@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace VQLib.Util
 {
     public static class VQStringExtensions
     {
+        public static JsonSerializerOptions VQDefaultJsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
         public static bool IsNullOrWhiteSpace(this string text) => string.IsNullOrWhiteSpace(text);
 
         public static bool IsNotNullOrWhiteSpace(this string text) => !string.IsNullOrWhiteSpace(text);
@@ -22,22 +26,19 @@ namespace VQLib.Util
             return text.Split(splitStrings, StringSplitOptions.RemoveEmptyEntries);
         }
 
-        public static string ToJson<T>(this T data)
+        public static string ToJson<T>(this T data, JsonSerializerOptions options = null)
         {
-            return JsonSerializer.Serialize<T>(data);
+            return JsonSerializer.Serialize<T>(data, options);
         }
 
-        public static T FromJson<T>(this string value)
+        public static T FromJson<T>(this string value, JsonSerializerOptions options = null)
         {
-            try
-            {
-                return JsonSerializer.Deserialize<T>(value);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return default;
-            }
+            return JsonSerializer.Deserialize<T>(value, options ?? VQDefaultJsonOptions);
+        }
+
+        public static async Task<T> FromJson<T>(this Stream value, JsonSerializerOptions options = null)
+        {
+            return await JsonSerializer.DeserializeAsync<T>(value, options ?? VQDefaultJsonOptions);
         }
 
         public static bool EmailIsValid(this string value)
