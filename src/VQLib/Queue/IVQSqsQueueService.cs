@@ -4,7 +4,7 @@ using VQLib.Queue.Model;
 
 namespace VQLib.Queue
 {
-    public interface IVQQueueService<T>
+    public interface IVQSqsQueueService<T>
     {
         Task Enqueue(T data, string queueName, int delayInSeconds = 0);
 

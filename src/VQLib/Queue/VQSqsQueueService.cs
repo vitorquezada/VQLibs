@@ -11,7 +11,7 @@ using VQLib.Util;
 
 namespace VQLib.Queue
 {
-    public class VQSqsQueueService<T> : IVQQueueService<T>
+    public class VQSqsQueueService<T> : IVQSqsQueueService<T>
     {
         private readonly VQAwsConfigModel _configModel;
 
