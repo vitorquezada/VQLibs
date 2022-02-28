@@ -11,16 +11,27 @@ using VQLib.Util;
 
 namespace VQLib.Queue
 {
-    public class VQSqsQueueService<T> : IVQSqsQueueService<T>
+    public class VQSqsQueueService<T> : IVQSqsQueueService<T>, IDisposable
     {
         private readonly VQAwsConfigModel _configModel;
+
+        private string QueueName;
+        private string QueueUrl;
+
+        private IAmazonSQS _client;
 
         public VQSqsQueueService(VQAwsConfigModel configModel)
         {
             _configModel = configModel;
         }
 
-        public async Task ChangeVisibilityManyTimeout(IEnumerable<string> receipt, string queueName, int visibilityTimeoutSeconds = 3600)
+        public IVQSqsQueueService<T> Config(string queueName)
+        {
+            QueueName = queueName;
+            return this;
+        }
+
+        public async Task ChangeVisibilityManyTimeout(IEnumerable<string> receipt, int visibilityTimeoutSeconds = 3600)
         {
             var obj = new ChangeMessageVisibilityBatchRequest
             {
@@ -30,49 +41,49 @@ namespace VQLib.Queue
                     ReceiptHandle = x,
                     VisibilityTimeout = visibilityTimeoutSeconds
                 }).ToList(),
-                QueueUrl = GetQueueUrl(queueName),
+                QueueUrl = QueueUrl,
             };
 
-            using var client = GetClient(queueName);
+            var client = await GetClient();
             var response = await client.ChangeMessageVisibilityBatchAsync(obj);
         }
 
-        public async Task ChangeVisibilityTimeout(string receipt, string queueName, int visibilityTimeoutSeconds = 3600)
+        public async Task ChangeVisibilityTimeout(string receipt, int visibilityTimeoutSeconds = 3600)
         {
             var obj = new ChangeMessageVisibilityRequest
             {
                 ReceiptHandle = receipt,
-                QueueUrl = GetQueueUrl(queueName),
+                QueueUrl = QueueUrl,
                 VisibilityTimeout = visibilityTimeoutSeconds,
             };
 
-            using var client = GetClient(queueName);
+            var client = await GetClient();
             var response = await client.ChangeMessageVisibilityAsync(obj);
         }
 
-        public async Task Confirm(QueueResponse response, string queueName)
+        public async Task Confirm(QueueResponse response)
         {
-            await Confirm(response.Receipt, queueName);
+            await Confirm(response.Receipt);
         }
 
-        public async Task Confirm(string receipt, string queueName)
+        public async Task Confirm(string receipt)
         {
             var delete = new DeleteMessageRequest
             {
                 ReceiptHandle = receipt,
-                QueueUrl = GetQueueUrl(queueName),
+                QueueUrl = QueueUrl,
             };
 
-            using var client = GetClient(queueName);
+            var client = await GetClient();
             await client.DeleteMessageAsync(delete);
         }
 
-        public async Task ConfirmMany(IEnumerable<QueueResponse> response, string queueName)
+        public async Task ConfirmMany(IEnumerable<QueueResponse> response)
         {
-            await ConfirmMany(response.Select(x => x.Receipt).ToHashSet(), queueName);
+            await ConfirmMany(response.Select(x => x.Receipt).ToHashSet());
         }
 
-        public async Task ConfirmMany(IEnumerable<string> receipt, string queueName)
+        public async Task ConfirmMany(IEnumerable<string> receipt)
         {
             var delete = new DeleteMessageBatchRequest
             {
@@ -81,30 +92,41 @@ namespace VQLib.Queue
                     ReceiptHandle = x,
                     Id = i.ToString(),
                 }).ToList(),
-                QueueUrl = GetQueueUrl(queueName),
+                QueueUrl = QueueUrl,
             };
 
-            using var client = GetClient(queueName);
+            var client = await GetClient();
             await client.DeleteMessageBatchAsync(delete);
         }
 
-        public async Task<List<T>> Dequeue(string queueName)
+        public async Task<List<T>> Dequeue()
         {
-            var messageResponses = await GetMessages(queueName);
+            var messageResponses = await GetMessages();
 
             var response = new List<T>();
             foreach (var message in messageResponses.Messages)
             {
                 response.Add(message.Body.FromJson<T>());
-                await Confirm(message.ReceiptHandle, queueName);
+                await Confirm(message.ReceiptHandle);
             }
 
             return response;
         }
 
-        public async Task<List<QueueResponse<T>>> DequeueConfirmation(string queueName, int visibilityTimeoutSeconds = 3600, int maxNumberOfMessages = 10, int? waitTimeSeconds = null)
+        public Task<List<QueueResponse<T>>> DequeueConfirmation(TimeSpan visibilityTimeout = default, int maxNumberOfMessages = 10, TimeSpan? waitTime = null)
         {
-            var messageResponses = await GetMessages(queueName, visibilityTimeoutSeconds, maxNumberOfMessages, waitTimeSeconds);
+            var visibilityTimeoutSeconds = visibilityTimeout.Ticks > 0
+                ? Convert.ToInt32(visibilityTimeout.TotalSeconds)
+                : 3600;
+            var waitTimeInSeconds = waitTime.HasValue
+                ? Convert.ToInt32(waitTime.Value.TotalSeconds)
+                : default(int?);
+            return DequeueConfirmation(visibilityTimeoutSeconds, maxNumberOfMessages, waitTimeInSeconds);
+        }
+
+        public async Task<List<QueueResponse<T>>> DequeueConfirmation(int visibilityTimeoutSeconds = 3600, int maxNumberOfMessages = 10, int? waitTimeSeconds = null)
+        {
+            var messageResponses = await GetMessages(visibilityTimeoutSeconds, maxNumberOfMessages, waitTimeSeconds);
 
             var response = new List<QueueResponse<T>>();
             foreach (var message in messageResponses.Messages)
@@ -119,7 +141,7 @@ namespace VQLib.Queue
             return response;
         }
 
-        public async Task Enqueue(T data, string queueName, int delayInSeconds = 0)
+        public async Task Enqueue(T data, int delayInSeconds = 0)
         {
             if (delayInSeconds > 900)
                 throw new ArgumentOutOfRangeException("Impossible to enqueue item. The maximum value for delay is 900 (=15minutes)");
@@ -129,20 +151,20 @@ namespace VQLib.Queue
 
             var message = new SendMessageRequest
             {
-                QueueUrl = GetQueueUrl(queueName),
+                QueueUrl = QueueUrl,
                 DelaySeconds = delayInSeconds,
                 MessageBody = dataSerialized
             };
 
-            using var client = GetClient(queueName);
+            var client = await GetClient();
             var response = await client.SendMessageAsync(message);
         }
 
-        public async Task Enqueue(List<T> dataList, string queueName, int delayInSeconds = 0)
+        public async Task Enqueue(IEnumerable<T> dataList, int delayInSeconds = 0)
         {
             var request = new SendMessageBatchRequest
             {
-                QueueUrl = GetQueueUrl(queueName),
+                QueueUrl = QueueUrl,
                 Entries = dataList.Select((x, index) => new SendMessageBatchRequestEntry
                 {
                     Id = index.ToString(),
@@ -151,27 +173,24 @@ namespace VQLib.Queue
                 }).ToList()
             };
 
-            using var client = GetClient(queueName);
+            var client = await GetClient();
             var response = await client.SendMessageBatchAsync(request);
         }
 
-        private string GetQueueUrl(string queueName)
+        public void Dispose()
         {
-            return $"{_configModel.Region.GetEndpointForService("sqs")}/{_configModel.AccountNumber}/{queueName}";
+            if (_client != null)
+            {
+                _client.Dispose();
+                _client = null;
+            }
         }
 
-        private IAmazonSQS GetClient(string queueName)
-        {
-            return _configModel.AccessKey.IsNotNullOrWhiteSpace() && _configModel.SecretKey.IsNotNullOrWhiteSpace()
-                ? new AmazonSQSClient(_configModel.AccessKey, _configModel.SecretKey, _configModel.Region)
-                : new AmazonSQSClient(_configModel.Region);
-        }
-
-        private async Task<ReceiveMessageResponse> GetMessages(string queueName, int visibilityTimeoutSeconds = 3600, int maxNumberOfMessages = 10, int? waitTimeSeconds = null)
+        private async Task<ReceiveMessageResponse> GetMessages(int visibilityTimeoutSeconds = 3600, int maxNumberOfMessages = 10, int? waitTimeSeconds = null)
         {
             var messageRequest = new ReceiveMessageRequest()
             {
-                QueueUrl = GetQueueUrl(queueName),
+                QueueUrl = QueueUrl,
                 MaxNumberOfMessages = maxNumberOfMessages,
                 VisibilityTimeout = visibilityTimeoutSeconds,
             };
@@ -179,7 +198,7 @@ namespace VQLib.Queue
             if (waitTimeSeconds.GetValueOrDefault() > 0)
                 messageRequest.WaitTimeSeconds = waitTimeSeconds.Value;
 
-            using var client = GetClient(queueName);
+            var client = await GetClient();
             var messageResponses = await client.ReceiveMessageAsync(messageRequest);
 
             return messageResponses;
@@ -192,6 +211,22 @@ namespace VQLib.Queue
             var dataSize = Encoding.ASCII.GetByteCount(data);
             if (dataSize > MAX_SIZE_KB)
                 throw new Exception("Impossible to queue data. The item should have a maximum of 256kb in size. Data: " + data);
+        }
+
+        private async Task<IAmazonSQS> GetClient()
+        {
+            if (_client == null)
+            {
+                _client = _configModel.AccessKey.IsNotNullOrWhiteSpace() && _configModel.SecretKey.IsNotNullOrWhiteSpace()
+                    ? new AmazonSQSClient(_configModel.AccessKey, _configModel.SecretKey, _configModel.Region)
+                    : new AmazonSQSClient(_configModel.Region);
+
+                await _client.CreateQueueAsync(QueueName);
+                var queueUrlResponse = await _client.GetQueueUrlAsync(QueueName);
+                QueueUrl = queueUrlResponse.QueueUrl;
+            }
+
+            return _client;
         }
     }
 }

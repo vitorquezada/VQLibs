@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using VQLib.Queue.Model;
 
@@ -6,24 +7,28 @@ namespace VQLib.Queue
 {
     public interface IVQSqsQueueService<T>
     {
-        Task Enqueue(T data, string queueName, int delayInSeconds = 0);
+        IVQSqsQueueService<T> Config(string queueName);
 
-        Task Enqueue(List<T> dataList, string queueName, int delayInSeconds = 0);
+        Task Enqueue(T data, int delayInSeconds = 0);
 
-        Task<List<T>> Dequeue(string queueName);
+        Task Enqueue(IEnumerable<T> dataList, int delayInSeconds = 0);
 
-        Task<List<QueueResponse<T>>> DequeueConfirmation(string queueName, int visibilityTimeoutSeconds = 3600, int maxNumberOfMessages = 10, int? waitTimeSeconds = null);
+        Task<List<T>> Dequeue();
 
-        Task Confirm(QueueResponse response, string queueName);
+        Task<List<QueueResponse<T>>> DequeueConfirmation(int visibilityTimeoutSeconds = 3600, int maxNumberOfMessages = 10, int? waitTimeSeconds = null);
 
-        Task ConfirmMany(IEnumerable<QueueResponse> response, string queueName);
+        Task<List<QueueResponse<T>>> DequeueConfirmation(TimeSpan visibilityTimeout, int maxNumberOfMessages = 10, TimeSpan? waitTime = null);
 
-        Task Confirm(string receipt, string queueName);
+        Task Confirm(QueueResponse response);
 
-        Task ConfirmMany(IEnumerable<string> response, string queueName);
+        Task ConfirmMany(IEnumerable<QueueResponse> response);
 
-        Task ChangeVisibilityTimeout(string receipt, string queueName, int visibilityTimeoutSeconds = 3600);
+        Task Confirm(string receipt);
 
-        Task ChangeVisibilityManyTimeout(IEnumerable<string> receipt, string queueName, int visibilityTimeoutSeconds = 3600);
+        Task ConfirmMany(IEnumerable<string> response);
+
+        Task ChangeVisibilityTimeout(string receipt, int visibilityTimeoutSeconds = 3600);
+
+        Task ChangeVisibilityManyTimeout(IEnumerable<string> receipt, int visibilityTimeoutSeconds = 3600);
     }
 }

@@ -9,7 +9,5 @@ namespace VQLib.AwsCloud.Model
         public string SecretKey { get; set; }
 
         public string AccessKey { get; set; }
-
-        public string AccountNumber { get; set; }
     }
 }
