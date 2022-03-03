@@ -15,8 +15,11 @@ namespace VQLib.Queue
     {
         private readonly VQAwsConfigModel _configModel;
 
-        private string QueueName;
-        private string QueueUrl;
+        private string _queueName;
+        private string _queueUrl;
+        private TimeSpan _messageRetentionPeriod;
+        private bool _createDeadQueue;
+        private int _deadQueueAttempts;
 
         private IAmazonSQS _client;
 
@@ -25,9 +28,12 @@ namespace VQLib.Queue
             _configModel = configModel;
         }
 
-        public IVQSqsQueueService<T> Config(string queueName)
+        public IVQSqsQueueService<T> Config(string queueName, int messageRetentionPeriodDays = 14, bool createDeadQueue = true, int deadQueueAttempts = 10)
         {
-            QueueName = queueName;
+            _queueName = queueName;
+            _messageRetentionPeriod = TimeSpan.FromDays(messageRetentionPeriodDays);
+            _createDeadQueue = createDeadQueue;
+            _deadQueueAttempts = deadQueueAttempts;
             return this;
         }
 
@@ -41,7 +47,7 @@ namespace VQLib.Queue
                     ReceiptHandle = x,
                     VisibilityTimeout = visibilityTimeoutSeconds
                 }).ToList(),
-                QueueUrl = QueueUrl,
+                QueueUrl = _queueUrl,
             };
 
             var client = await GetClient();
@@ -53,7 +59,7 @@ namespace VQLib.Queue
             var obj = new ChangeMessageVisibilityRequest
             {
                 ReceiptHandle = receipt,
-                QueueUrl = QueueUrl,
+                QueueUrl = _queueUrl,
                 VisibilityTimeout = visibilityTimeoutSeconds,
             };
 
@@ -71,7 +77,7 @@ namespace VQLib.Queue
             var delete = new DeleteMessageRequest
             {
                 ReceiptHandle = receipt,
-                QueueUrl = QueueUrl,
+                QueueUrl = _queueUrl,
             };
 
             var client = await GetClient();
@@ -92,7 +98,7 @@ namespace VQLib.Queue
                     ReceiptHandle = x,
                     Id = i.ToString(),
                 }).ToList(),
-                QueueUrl = QueueUrl,
+                QueueUrl = _queueUrl,
             };
 
             var client = await GetClient();
@@ -151,7 +157,7 @@ namespace VQLib.Queue
 
             var message = new SendMessageRequest
             {
-                QueueUrl = QueueUrl,
+                QueueUrl = _queueUrl,
                 DelaySeconds = delayInSeconds,
                 MessageBody = dataSerialized
             };
@@ -164,7 +170,7 @@ namespace VQLib.Queue
         {
             var request = new SendMessageBatchRequest
             {
-                QueueUrl = QueueUrl,
+                QueueUrl = _queueUrl,
                 Entries = dataList.Select((x, index) => new SendMessageBatchRequestEntry
                 {
                     Id = index.ToString(),
@@ -190,7 +196,7 @@ namespace VQLib.Queue
         {
             var messageRequest = new ReceiveMessageRequest()
             {
-                QueueUrl = QueueUrl,
+                QueueUrl = _queueUrl,
                 MaxNumberOfMessages = maxNumberOfMessages,
                 VisibilityTimeout = visibilityTimeoutSeconds,
             };
@@ -206,7 +212,7 @@ namespace VQLib.Queue
 
         private void CheckDataSize(string data)
         {
-            int MAX_SIZE_KB = 256 * 1024; //Max size allowed by Amazon SQS = 256kb
+            int MAX_SIZE_KB = 256 * 1024;
 
             var dataSize = Encoding.ASCII.GetByteCount(data);
             if (dataSize > MAX_SIZE_KB)
@@ -221,12 +227,84 @@ namespace VQLib.Queue
                     ? new AmazonSQSClient(_configModel.AccessKey, _configModel.SecretKey, _configModel.Region)
                     : new AmazonSQSClient(_configModel.Region);
 
-                await _client.CreateQueueAsync(QueueName);
-                var queueUrlResponse = await _client.GetQueueUrlAsync(QueueName);
-                QueueUrl = queueUrlResponse.QueueUrl;
+                var queueList = await _client.ListQueuesAsync(_queueName);
+
+                var existsQueue = queueList.QueueUrls?.Any(x => x.EndsWith(_queueName)) ?? false;
+                var deadQueueArn = await CreateAndGetArnDeadQueue(queueList, existsQueue);
+                _queueUrl = await CreateAndReturnUrlQueue(existsQueue, deadQueueArn);
             }
 
             return _client;
+        }
+
+        private async Task<string> CreateAndGetArnDeadQueue(ListQueuesResponse queueList, bool existsQueue)
+        {
+            if (!_createDeadQueue)
+                return null;
+
+            var deadQueueName = $"{_queueName}-DEAD";
+
+            var urlDeadQueue = queueList?.QueueUrls?.FirstOrDefault(x => x.EndsWith(deadQueueName)) ?? string.Empty;
+
+            if (urlDeadQueue.IsNullOrWhiteSpace())
+            {
+                var queueDead = await _client.CreateQueueAsync(new CreateQueueRequest
+                {
+                    QueueName = deadQueueName,
+                    Attributes = new Dictionary<string, string>
+                    {
+                        { QueueAttributeName.MessageRetentionPeriod, TimeSpan.FromDays(14).TotalSeconds.ToString() },
+                    },
+                });
+                return queueDead.ResponseMetadata.Metadata[QueueAttributeName.QueueArn];
+            }
+
+            if (!existsQueue)
+            {
+                var url = queueList.QueueUrls.First(x => x.EndsWith(deadQueueName));
+
+                var attr = await _client.GetQueueAttributesAsync(new GetQueueAttributesRequest
+                {
+                    QueueUrl = url,
+                    AttributeNames = new List<string>
+                    {
+                        QueueAttributeName.QueueArn,
+                    },
+                });
+
+                return attr.Attributes[QueueAttributeName.QueueArn];
+            }
+
+            return null;
+        }
+
+        private async Task<string> CreateAndReturnUrlQueue(bool existsQueue, string deadQueueArn)
+        {
+            if (!existsQueue)
+            {
+                var queueRequest = new CreateQueueRequest
+                {
+                    QueueName = _queueName,
+                    Attributes = new Dictionary<string, string>
+                    {
+                        { QueueAttributeName.MessageRetentionPeriod, _messageRetentionPeriod.TotalSeconds.ToString() },
+                    },
+                };
+
+                if (deadQueueArn.IsNotNullOrWhiteSpace())
+                {
+                    queueRequest.Attributes.Add(QueueAttributeName.RedrivePolicy, new
+                    {
+                        deadLetterTargetArn = deadQueueArn,
+                        maxReceiveCount = _deadQueueAttempts,
+                    }.ToJson());
+                }
+
+                _ = await _client.CreateQueueAsync(queueRequest);
+            }
+
+            var queueUrlResponse = await _client.GetQueueUrlAsync(_queueName);
+            return queueUrlResponse.QueueUrl;
         }
     }
 }

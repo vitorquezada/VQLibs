@@ -7,7 +7,7 @@ namespace VQLib.Queue
 {
     public interface IVQSqsQueueService<T>
     {
-        IVQSqsQueueService<T> Config(string queueName);
+        IVQSqsQueueService<T> Config(string queueName, int messageRetentionPeriodDays = 14, bool createDeadQueue = true, int deadQueueAttempts = 10);
 
         Task Enqueue(T data, int delayInSeconds = 0);
 
