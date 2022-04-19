@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\VQLib.Jwt\VQLib.Jwt.csproj" />
     <ProjectReference Include="..\VQLib\VQLib.csproj" />
   </ItemGroup>
 

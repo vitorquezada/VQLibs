@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -21,6 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\VQLib.Azure.Storage.Blob\VQLib.Azure.Storage.Blob.csproj" />
+    <ProjectReference Include="..\VQLib.Azure\VQLib.Azure.csproj" />
+    <ProjectReference Include="..\VQLib.Email\VQLib.Email.csproj" />
     <ProjectReference Include="..\VQLib\VQLib.csproj" />
   </ItemGroup>
 

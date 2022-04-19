@@ -5,8 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.7.8.1" />
-    <PackageReference Include="AWSSDK.SQS" Version="3.7.2.26" />
     <PackageReference Include="libsodium" Version="1.0.18.1" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.2" />
@@ -21,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Notification\" />
+    <ProjectReference Include="..\VQLib.Util\VQLib.Util.csproj" />
   </ItemGroup>
 
 </Project>
