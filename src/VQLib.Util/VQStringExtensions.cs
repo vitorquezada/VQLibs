@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
@@ -155,6 +157,28 @@ namespace VQLib.Util
                 return email;
 
             return Regex.Replace(Regex.Replace(email, group1, m => new string('*', m.Length)), group2, m => new string('*', m.Length));
+        }
+
+        public static string RemoveAccents(this string text)
+        {
+            string formD = text.Normalize(NormalizationForm.FormD);
+            string newText = string.Empty;
+
+            foreach (char ch in formD)
+            {
+                var charCategory = CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (charCategory != UnicodeCategory.NonSpacingMark)
+                {
+                    newText += ch;
+                }
+            }
+
+            return newText.Normalize(NormalizationForm.FormC);
+        }
+
+        public static bool ContainsIgnoreCaseAndAccents(this string x1, string x2)
+        {
+            return RemoveAccents(x1).Contains(RemoveAccents(x2), StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }

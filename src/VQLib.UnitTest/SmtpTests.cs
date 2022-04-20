@@ -11,8 +11,8 @@ namespace VQLib.UnitTest
         [Fact]
         public async Task SendSmtp_Valid()
         {
-            //Assert.True(true);
-            //return;
+            Assert.True(true);
+            return;
 
             var emailService = new VQSmtpEmailService();
 

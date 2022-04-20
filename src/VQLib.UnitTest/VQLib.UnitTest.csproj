@@ -24,6 +24,7 @@
     <ProjectReference Include="..\VQLib.Azure.Storage.Blob\VQLib.Azure.Storage.Blob.csproj" />
     <ProjectReference Include="..\VQLib.Azure\VQLib.Azure.csproj" />
     <ProjectReference Include="..\VQLib.Email\VQLib.Email.csproj" />
+    <ProjectReference Include="..\VQLib.Enumerator\VQLib.Enumerator.csproj" />
     <ProjectReference Include="..\VQLib\VQLib.csproj" />
   </ItemGroup>
 
