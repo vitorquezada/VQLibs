@@ -29,7 +29,7 @@ namespace VQLib.Validation
         {
             result.AddValidationItem(
                 message,
-                GetPropertyName(propName).GetPropertyName(prefixPropertyName, sufixPropertyName),
+                GetPropertyName(propName, prefixPropertyName, sufixPropertyName),
                 type,
                 messageArgs: messageArgs);
         }
