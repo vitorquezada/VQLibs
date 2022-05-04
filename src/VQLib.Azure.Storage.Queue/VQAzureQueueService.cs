@@ -10,7 +10,6 @@ namespace VQLib.Azure.Storage.Queue
     public class VQAzureQueueService : IVQAzureQueueService
     {
         private static readonly TimeSpan DEFAULT_TIMEOUT_VISIBILITY = TimeSpan.FromMinutes(1);
-        private QueueClient? _client;
         private readonly VQAzureStorageConfig _config;
 
         private Dictionary<string, QueueClient> _cacheQueueClient = new Dictionary<string, QueueClient>();

@@ -43,7 +43,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VQLib.Swagger", "VQLib.Swag
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VQLib.Session", "VQLib.Session\VQLib.Session.csproj", "{D087AE53-2E9A-4400-9B1D-EE8BED20816A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VQLib.Enumerator", "VQLib.Enumerator\VQLib.Enumerator.csproj", "{6CE02F2C-ADE6-4E49-9289-5E2C529B8F89}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VQLib.Enumerator", "VQLib.Enumerator\VQLib.Enumerator.csproj", "{6CE02F2C-ADE6-4E49-9289-5E2C529B8F89}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VQLib.Azure.ServiceBus", "VQLib.Azure.ServiceBus\VQLib.Azure.ServiceBus.csproj", "{688E20C7-F292-48C9-B613-C00E73F4E05B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -127,6 +129,10 @@ Global
 		{6CE02F2C-ADE6-4E49-9289-5E2C529B8F89}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6CE02F2C-ADE6-4E49-9289-5E2C529B8F89}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6CE02F2C-ADE6-4E49-9289-5E2C529B8F89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{688E20C7-F292-48C9-B613-C00E73F4E05B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{688E20C7-F292-48C9-B613-C00E73F4E05B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{688E20C7-F292-48C9-B613-C00E73F4E05B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{688E20C7-F292-48C9-B613-C00E73F4E05B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -151,6 +157,7 @@ Global
 		{B8FE02C4-EAD0-4939-A217-DB6FA6706D3F} = {097E50C3-9574-4D5E-9D26-25E0A1C244E6}
 		{D087AE53-2E9A-4400-9B1D-EE8BED20816A} = {097E50C3-9574-4D5E-9D26-25E0A1C244E6}
 		{6CE02F2C-ADE6-4E49-9289-5E2C529B8F89} = {097E50C3-9574-4D5E-9D26-25E0A1C244E6}
+		{688E20C7-F292-48C9-B613-C00E73F4E05B} = {097E50C3-9574-4D5E-9D26-25E0A1C244E6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1CF1CB9F-4293-4919-9EA9-1240250B2F2E}

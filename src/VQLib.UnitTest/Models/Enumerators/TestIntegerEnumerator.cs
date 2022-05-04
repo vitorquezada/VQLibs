@@ -1,8 +1,8 @@
-﻿using VizePortal.Infra.Enumerators;
+﻿using VQLib.Enumerator;
 
 namespace VQLib.UnitTest.Models.Enumerators
 {
-    public class TestIntegerEnumerator : BaseEnumerator<TestIntegerEnumerator, int>
+    public class TestIntegerEnumerator : BaseEnumerator<TestIntegerEnumerator>
     {
         public static TestIntegerEnumerator Test1 = new(1, "Test1");
         public static TestIntegerEnumerator Test2 = new(2, "Test2");

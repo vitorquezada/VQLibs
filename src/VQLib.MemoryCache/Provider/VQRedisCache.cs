@@ -12,23 +12,27 @@ namespace VQLib.MemoryCache.Provider
             _connection = connection;
         }
 
-        public Task<T> Get<T>(string key, T defaultValue = default)
+        public Task<T?> Get<T>(string key, T? defaultValue = default)
         {
             return GetPrivate(key, defaultValue);
         }
 
-        public Task<T> Set<T>(string key, T @object, TimeSpan duration = default)
+        public async Task Set<T>(string key, T @object, TimeSpan duration = default)
         {
-            return SetPrivate<T>(key, @object, duration);
+            await SetPrivate<T>(key, @object, duration);
         }
 
-        public async Task<T> GetOrSet<T>(string key, Func<T> getObjectFunc, TimeSpan duration = default)
+        public async Task<T?> GetOrSet<T>(string key, Func<Task<T>> getObjectFunc, TimeSpan duration = default)
         {
             var db = _connection.GetDatabase();
 
-            var value = await GetPrivate<T>(key, default, db);
-            if (value.Equals(default(T)))
-                return await SetPrivate(key, getObjectFunc(), duration, db);
+            var @default = default(T);
+            var value = await GetPrivate(key, @default, db);
+            if (!ReferenceEquals(value, @default))
+                return value;
+
+            value = await getObjectFunc();
+            await SetPrivate(key, value, duration, db);
             return value;
         }
 
@@ -37,7 +41,7 @@ namespace VQLib.MemoryCache.Provider
             return RemovePrivate(key);
         }
 
-        private async Task<T> SetPrivate<T>(string key, T @object, TimeSpan duration = default, IDatabase db = null)
+        private async Task SetPrivate<T>(string key, T @object, TimeSpan duration = default, IDatabase? db = null)
         {
             db ??= _connection.GetDatabase();
 
@@ -46,10 +50,9 @@ namespace VQLib.MemoryCache.Provider
 
             var stringValue = @object.ToJson();
             await db.StringSetAsync(key, stringValue, duration);
-            return @object;
         }
 
-        private async Task<T> GetPrivate<T>(string key, T defaultValue, IDatabase db = null)
+        private async Task<T?> GetPrivate<T>(string key, T? defaultValue, IDatabase? db = null)
         {
             db ??= _connection.GetDatabase();
 
@@ -59,10 +62,9 @@ namespace VQLib.MemoryCache.Provider
             return defaultValue;
         }
 
-        public async Task RemovePrivate(string key, IDatabase db = null)
+        public async Task RemovePrivate(string key, IDatabase? db = null)
         {
             db ??= _connection.GetDatabase();
-
             await db.KeyDeleteAsync(key);
         }
     }
