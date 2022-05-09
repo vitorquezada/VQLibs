@@ -1,14 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using VQLib.Relational.Entity;
 
 namespace VQLib.Relational
 {
     public abstract class VQDbContext : DbContext
     {
+        public const string IS_DELETED_COLUMN_NAME = "Deleted";
+
         protected abstract long GetTenantId { get; }
 
         public VQDbContext() : base()
@@ -45,9 +44,12 @@ namespace VQLib.Relational
 
         protected virtual void SetTenantId(EntityEntry entry)
         {
-            if (entry.CurrentValues.Properties.Any(x => x.Name == nameof(VQBaseEntityTenant.TenantId))
-                && ((long)entry.CurrentValues[nameof(VQBaseEntityTenant.TenantId)]) == 0)
-                entry.CurrentValues[nameof(VQBaseEntityTenant.TenantId)] = GetTenantId;
+            if (entry.CurrentValues.Properties.Any(x => x.Name == nameof(VQBaseEntityTenant.TenantId)))
+            {
+                var currentValue = (long?)entry.CurrentValues[nameof(VQBaseEntityTenant.TenantId)] ?? 0;
+                if (currentValue == 0)
+                    entry.CurrentValues[nameof(VQBaseEntityTenant.TenantId)] = GetTenantId;
+            }
         }
 
         //protected static void SetCreateUpdatedAt(EntityEntry entry)
@@ -57,7 +59,7 @@ namespace VQLib.Relational
         //        entry.CurrentValues[nameof(VQBaseEntity.CreatedDate)] = dateTime;
 
         //    if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
-        //        entry.CurrentValues[nameof(VQBaseEntity.CreatedDate)] = dateTime;
+        //        entry.CurrentValues[nameof(VQBaseEntity.UpdatedDate)] = dateTime;
         //}
 
         protected static void SetSoftDelete(EntityEntry entry)
@@ -65,7 +67,7 @@ namespace VQLib.Relational
             if (entry.State == EntityState.Deleted)
             {
                 entry.State = EntityState.Modified;
-                entry.CurrentValues[nameof(VQBaseEntity.Active)] = false;
+                entry.CurrentValues[nameof(IS_DELETED_COLUMN_NAME)] = false;
             }
         }
     }

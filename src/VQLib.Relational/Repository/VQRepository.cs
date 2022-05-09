@@ -10,7 +10,7 @@ namespace VQLib.Relational.Repository
     {
         private readonly IVQSessionService _sessionService;
 
-        protected override IQueryable<T> _dbSet => base._dbSet.Where(x => x.TenantId == _sessionService.TenantId && x.Active);
+        protected override IQueryable<T> _dbSet => base._dbSet.Where(x => x.TenantId == _sessionService.TenantId);
 
         public VQRepository(DbContext dbContext, IVQSessionService sessionService) : base(dbContext)
         {
@@ -22,7 +22,7 @@ namespace VQLib.Relational.Repository
     {
         private readonly DbContext _dbContext;
 
-        protected virtual IQueryable<T> _dbSet => _dbContext.Set<T>().Where(x => x.Active);
+        protected virtual IQueryable<T> _dbSet => _dbSetUnsafe;
 
         protected virtual IQueryable<T> _dbSetUnsafe => _dbContext.Set<T>();
 
@@ -135,13 +135,15 @@ namespace VQLib.Relational.Repository
         public virtual async Task<int> Delete(long id, CancellationToken cancellationToken = default)
         {
             var entity = await _dbContext.Set<T>().FindAsync(new object[] { id }, cancellationToken);
+            if (entity == null)
+                return 0;
             _dbContext.Set<T>().Remove(entity);
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public virtual async Task<int> Delete(IEnumerable<long> ids, CancellationToken cancellationToken = default)
         {
-            var entities = await Task.WhenAll(ids.Select(async x => await _dbContext.Set<T>().FindAsync(new object[] { x }, cancellationToken)));
+            var entities = await _dbContext.Set<T>().Where(x => ids.Contains(x.Id)).ToListAsync();
             _dbContext.Set<T>().RemoveRange(entities);
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }

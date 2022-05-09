@@ -28,7 +28,7 @@ namespace VQLib.MemoryCache.Provider
 
             var @default = default(T);
             var value = await GetPrivate(key, @default, db);
-            if (!ReferenceEquals(value, @default))
+            if (!EqualityComparer<T>.Default.Equals(value, @default))
                 return value;
 
             value = await getObjectFunc();

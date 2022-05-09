@@ -180,5 +180,15 @@ namespace VQLib.Util
         {
             return RemoveAccents(x1).Contains(RemoveAccents(x2), StringComparison.CurrentCultureIgnoreCase);
         }
+
+        public static string FormatCNPJ(this string CNPJ)
+        {
+            return Convert.ToUInt64(CNPJ).ToString("00'.'000'.'000'/'0000'-'00");
+        }
+
+        public static string FormatCPF(this string CPF)
+        {
+            return Convert.ToUInt64(CPF).ToString("000'.'000'.'000'-'00");
+        }
     }
 }

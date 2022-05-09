@@ -21,7 +21,7 @@ namespace VQLib.Relational.Mapping
                 .OnDelete(DeleteBehavior.SetNull);
 
             builder
-                .HasIndex(x => new { x.TenantId, x.Active });
+                .HasIndex(nameof(VQBaseEntityTenant.TenantId), VQDbContext.IS_DELETED_COLUMN_NAME);
 
             Map(builder);
         }
@@ -37,6 +37,8 @@ namespace VQLib.Relational.Mapping
         {
             builder.ToTable(TableName);
 
+            builder.HasQueryFilter(m => EF.Property<bool>(m, VQDbContext.IS_DELETED_COLUMN_NAME) == false);
+
             builder
                 .HasKey(x => x.Id);
             builder
@@ -45,7 +47,8 @@ namespace VQLib.Relational.Mapping
                 .ValueGeneratedOnAdd();
 
             builder
-                .HasAlternateKey(x => x.Key);
+                .HasIndex(x => x.Key)
+                .IsUnique();
             builder
                 .Property(x => x.Key)
                 .IsRequired()
@@ -54,11 +57,10 @@ namespace VQLib.Relational.Mapping
                 .HasValueGenerator<VQGuidValueGeneratorCustom>();
 
             builder
-                .HasIndex(x => x.Active);
-            builder
-                .Property(x => x.Active)
+                .Property<bool>(VQDbContext.IS_DELETED_COLUMN_NAME)
                 .IsRequired()
-                .HasDefaultValue(true);
+                .HasDefaultValue(false);
+            builder.HasIndex(VQDbContext.IS_DELETED_COLUMN_NAME);
 
             builder
                 .Property(x => x.CreatedDate)
