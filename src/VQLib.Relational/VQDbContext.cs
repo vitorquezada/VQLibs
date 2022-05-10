@@ -67,7 +67,7 @@ namespace VQLib.Relational
             if (entry.State == EntityState.Deleted)
             {
                 entry.State = EntityState.Modified;
-                entry.CurrentValues[nameof(IS_DELETED_COLUMN_NAME)] = false;
+                entry.CurrentValues[IS_DELETED_COLUMN_NAME] = false;
             }
         }
     }
