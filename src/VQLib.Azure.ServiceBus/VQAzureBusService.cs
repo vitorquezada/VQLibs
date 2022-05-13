@@ -88,11 +88,11 @@ namespace VQLib.Azure.ServiceBus
                     ScheduledEnqueueTime = DateTimeOffset.UtcNow.AddSeconds(delayInSeconds),
                 };
 
-                if (list[^0].TryAddMessage(message))
+                if (list[^1].TryAddMessage(message))
                     continue;
 
                 list.Add(await sender.CreateMessageBatchAsync());
-                if (list[^0].TryAddMessage(message))
+                if (list[^1].TryAddMessage(message))
                     continue;
 
                 throw new Exception("Message don't added to batch!");

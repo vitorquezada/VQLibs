@@ -64,15 +64,11 @@ namespace VQLib.Relational.Mapping
 
             builder
                 .Property(x => x.CreatedDate)
-                .IsRequired()
-                .ValueGeneratedOnAdd()
-                .HasValueGenerator<VQDateTimeOffsetUtcGenerator>();
+                .IsRequired();
 
             var lastUpdatedAtProp = builder
                 .Property(x => x.UpdatedDate)
-                .IsRequired()
-                .ValueGeneratedOnAddOrUpdate()
-                .HasValueGenerator<VQDateTimeOffsetUtcGenerator>();
+                .IsRequired();
             lastUpdatedAtProp.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Save);
 
             if (ExecuteOnBaseEntityMapping)

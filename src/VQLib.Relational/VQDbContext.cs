@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using VQLib.Relational.Entity;
+using VQLib.Relational.ValueGenerators;
 
 namespace VQLib.Relational
 {
@@ -37,7 +38,7 @@ namespace VQLib.Relational
             foreach (var entry in entries)
             {
                 SetSoftDelete(entry);
-                //SetCreateUpdatedAt(entry);
+                SetCreateUpdatedAt(entry);
                 SetTenantId(entry);
             }
         }
@@ -52,17 +53,17 @@ namespace VQLib.Relational
             }
         }
 
-        //protected static void SetCreateUpdatedAt(EntityEntry entry)
-        //{
-        //    var dateTime = new VQDateTimeUtcGenerator().Next(entry);
-        //    if (entry.State == EntityState.Added)
-        //        entry.CurrentValues[nameof(VQBaseEntity.CreatedDate)] = dateTime;
+        protected virtual void SetCreateUpdatedAt(EntityEntry entry)
+        {
+            var dateTime = new VQDateTimeOffsetUtcGenerator().Next(entry);
+            if (entry.State == EntityState.Added)
+                entry.CurrentValues[nameof(VQBaseEntity.CreatedDate)] = dateTime;
 
-        //    if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
-        //        entry.CurrentValues[nameof(VQBaseEntity.UpdatedDate)] = dateTime;
-        //}
+            if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+                entry.CurrentValues[nameof(VQBaseEntity.UpdatedDate)] = dateTime;
+        }
 
-        protected static void SetSoftDelete(EntityEntry entry)
+        protected virtual void SetSoftDelete(EntityEntry entry)
         {
             if (entry.State == EntityState.Deleted)
             {

@@ -115,13 +115,35 @@ namespace VQLib.Relational.Repository
 
         #region InsertUpdate
 
-        public virtual Task<T> InsertUpdate(T entity, CancellationToken cancellationToken = default) => InternalInsertUpdate(entity, true, cancellationToken);
+        public virtual async Task<T> InsertUpdate(T entity, CancellationToken cancellationToken = default)
+        {
+            var exist = entity.Id > 0
+                ? await _dbSetUnsafe.IgnoreQueryFilters().AnyAsync(x => x.Id == entity.Id, cancellationToken)
+                : false;
+            return await InternalInsertUpdate(entity, true, exist, cancellationToken);
+        }
 
         public virtual async Task<IEnumerable<T>> InsertUpdate(IList<T> entities, CancellationToken cancellationToken = default)
         {
+            var existedIds = new HashSet<long>();
+
+            var idList = entities.Where(x => x.Id > 0).Select(x => x.Id).ToHashSet();
+            if (idList.Any())
+            {
+                var existedIdsSearch = await _dbSetUnsafe.IgnoreQueryFilters()
+                    .Where(x => idList.Contains(x.Id))
+                    .Select(x => x.Id)
+                    .ToListAsync(cancellationToken);
+                foreach (var id in existedIdsSearch ?? new List<long>())
+                    existedIds.Add(id);
+            }
+
             for (var i = 0; i < entities.Count; i++)
             {
-                entities[i] = await InternalInsertUpdate(entities[i], false, cancellationToken);
+                var exists = entities[i].Id > 0
+                    ? existedIds.Contains(entities[i].Id)
+                    : false;
+                entities[i] = await InternalInsertUpdate(entities[i], false, exists, cancellationToken);
             }
 
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -174,12 +196,8 @@ namespace VQLib.Relational.Repository
 
         private IQueryable<TDest> SetSpecificationUnsafe<TDest>(IVQSpecTo<T, TDest> spec) => spec.Order(spec.Specify(_dbSetUnsafe));
 
-        private async Task<T> InternalInsertUpdate(T entity, bool saveChanges, CancellationToken cancellationToken = default)
+        private async Task<T> InternalInsertUpdate(T entity, bool saveChanges, bool exist, CancellationToken cancellationToken = default)
         {
-            var exist = entity.Id > 0
-                ? await _dbSetUnsafe.IgnoreQueryFilters().AnyAsync(x => x.Id == entity.Id, cancellationToken)
-                : false;
-
             if (exist)
             {
                 _dbContext.Set<T>().Update(entity);
