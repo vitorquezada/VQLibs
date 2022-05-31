@@ -32,7 +32,7 @@ namespace VQLib.Util
 
         public static string ToJson<T>(this T data, JsonSerializerOptions? options = null)
         {
-            return JsonSerializer.Serialize<T>(data, options);
+            return JsonSerializer.Serialize<T>(data, options ?? VQDefaultJsonOptions);
         }
 
         public static T? FromJson<T>(this string? value, JsonSerializerOptions? options = null)
