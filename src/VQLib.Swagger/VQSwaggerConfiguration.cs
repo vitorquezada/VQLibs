@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
@@ -10,7 +11,7 @@ namespace VQLib.Swagger
     {
         public const string NAME = "API Moneytoria";
 
-        public static void ConfigureSwaggerService(IServiceCollection services, Func<SwaggerGenOptions, SwaggerGenOptions> func = null)
+        public static void ConfigureSwaggerService(IServiceCollection services, Action<SwaggerGenOptions> func = null)
         {
             services.AddSwaggerGen(c =>
             {
@@ -39,13 +40,17 @@ namespace VQLib.Swagger
                 });
 
                 if (func != null)
-                    c = func(c);
+                    func(c);
             });
         }
 
-        public static void ConfigureSwaggerApp(IApplicationBuilder app, Func<SwaggerUIOptions, SwaggerUIOptions> func = null)
+        public static void ConfigureSwaggerApp(IApplicationBuilder app, Action<SwaggerUIOptions> funcUI = null, Action<SwaggerOptions> func = null)
         {
-            app.UseSwagger();
+            app.UseSwagger(c =>
+            {
+                if (func != null)
+                    func(c);
+            });
             app.UseSwaggerUI(c =>
             {
                 //c.SwaggerEndpoint("/swagger/v1/swagger.json", NAME);
@@ -53,8 +58,8 @@ namespace VQLib.Swagger
                 //c.DocumentTitle = NAME;
                 c.DocExpansion(DocExpansion.None);
 
-                if (func != null)
-                    c = func(c);
+                if (funcUI != null)
+                    funcUI(c);
             });
         }
     }
