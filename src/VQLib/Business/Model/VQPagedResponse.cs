@@ -4,7 +4,7 @@ using X.PagedList;
 
 namespace VQLib.Business.Model
 {
-    public class VQPagedResponse<T>
+    public class VQPagedResponse<T> : IPagedList
     {
         private readonly StaticPagedList<T> _pageList;
 
