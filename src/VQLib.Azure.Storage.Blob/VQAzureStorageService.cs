@@ -55,7 +55,7 @@ namespace VQLib.Azure.Storage.Blob
             var uri = new Uri(url);
             var key = uri.LocalPath;
             if (key.StartsWith("/")) key = key.Substring(1);
-            return Task.FromResult(key);
+            return Task.FromResult<string?>(key);
         }
 
         public async Task<string> Upload(Stream data, string key, string? ContentType = null)
