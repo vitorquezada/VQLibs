@@ -12,6 +12,21 @@ namespace VQLib.Azure.Storage.Blob
             _connectionString = config.StorageConnectionString ?? throw new ArgumentException($"Property {config.StorageConnectionString} can not be null or whitespace.", nameof(config));
         }
 
+        public async Task Delete(string key)
+        {
+            var (containerName, filePath) = SplitKey(key);
+
+            var container = new BlobContainerClient(_connectionString, containerName);
+
+            var containerExists = await container.ExistsAsync();
+            if (!containerExists.Value)
+                return;
+
+            var blob = container.GetBlobClient(filePath);
+
+            await blob.DeleteIfExistsAsync();
+        }
+
         public async Task<MemoryStream?> Get(string key, MemoryStream? @default = null)
         {
             var (containerName, filePath) = SplitKey(key);
@@ -33,6 +48,14 @@ namespace VQLib.Azure.Storage.Blob
             await blob.DownloadToAsync(stream);
 
             return stream;
+        }
+
+        public Task<string?> GetKeyByUrl(string url)
+        {
+            var uri = new Uri(url);
+            var key = uri.LocalPath;
+            if (key.StartsWith("/")) key = key.Substring(1);
+            return Task.FromResult(key);
         }
 
         public async Task<string> Upload(Stream data, string key, string? ContentType = null)
@@ -58,21 +81,6 @@ namespace VQLib.Azure.Storage.Blob
             }
 
             return blob.Uri.AbsoluteUri;
-        }
-
-        public async Task Delete(string key)
-        {
-            var (containerName, filePath) = SplitKey(key);
-
-            var container = new BlobContainerClient(_connectionString, containerName);
-
-            var containerExists = await container.ExistsAsync();
-            if (!containerExists.Value)
-                return;
-
-            var blob = container.GetBlobClient(filePath);
-
-            await blob.DeleteIfExistsAsync();
         }
 
         private (string ContainerName, string FilePath) SplitKey(string key)

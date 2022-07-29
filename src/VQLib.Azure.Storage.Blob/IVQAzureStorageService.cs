@@ -7,5 +7,7 @@
         Task<string> Upload(Stream data, string key, string? ContentType = null);
 
         Task Delete(string key);
+
+        Task<string?> GetKeyByUrl(string url);
     }
 }
