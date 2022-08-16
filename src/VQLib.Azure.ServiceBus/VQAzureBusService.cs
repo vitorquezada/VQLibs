@@ -1,4 +1,5 @@
 ﻿using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
 using Microsoft.Extensions.DependencyInjection;
 using VQLib.Azure.ServiceBus.Model;
 using VQLib.Util;
@@ -10,8 +11,9 @@ namespace VQLib.Azure.ServiceBus
         private readonly VQServiceBusConfiguration _configuration;
         private readonly IServiceProvider _serviceProvider;
 
-        private ServiceBusClient? _queueClient;
+        private ServiceBusAdministrationClient? _administrationClient;
         private ServiceBusProcessor? _processor;
+        private ServiceBusClient? _queueClient;
 
         public VQAzureBusService(VQServiceBusConfiguration configuration, IServiceProvider serviceProvider)
         {
@@ -19,40 +21,51 @@ namespace VQLib.Azure.ServiceBus
             _serviceProvider = serviceProvider;
         }
 
-        private ServiceBusClient GetClient()
+        public async Task<QueueProperties> CreateUpdateQueue(CreateQueueOptions properties)
         {
-            if (_queueClient == null)
+            if (!string.IsNullOrWhiteSpace(_configuration.SubscriptionName))
+                throw new ArgumentException(
+                    $"{nameof(_configuration.SubscriptionName)} present means a Topic/Subscription setting instead of Queue.",
+                    nameof(_configuration.SubscriptionName));
+
+            if (properties.Name != _configuration.QueueNameOrTopic)
+                throw new ArgumentException($"Argument {nameof(properties.Name)} must be equals {nameof(_configuration.QueueNameOrTopic)}", nameof(properties.Name));
+
+            var client = GetAdministrationClient();
+
+            var existResult = await client.QueueExistsAsync(_configuration.QueueNameOrTopic);
+            if (existResult.Value)
             {
-                if (string.IsNullOrWhiteSpace(_configuration.QueueNameOrTopic))
-                    throw new ArgumentNullException(nameof(_configuration.QueueNameOrTopic));
+                var existedQueue = await client.GetQueueAsync(_configuration.QueueNameOrTopic);
+                var propertiesUpdate = existedQueue?.Value ?? throw new ArgumentNullException();
 
-                _queueClient = new ServiceBusClient(_configuration.ConnectionString ?? throw new ArgumentNullException(nameof(_configuration.ConnectionString)));
+                properties.CopyPropertiesTo(propertiesUpdate);
+
+                var responseUpdate = await client.UpdateQueueAsync(propertiesUpdate);
+                return responseUpdate.Value;
             }
-
-            return _queueClient;
+            else
+            {
+                var responseCreate = await client.CreateQueueAsync(properties);
+                return responseCreate.Value;
+            }
         }
 
-        private ServiceBusProcessor GetProcessor()
+        public void Dispose()
         {
-            if (_processor == null)
-            {
-                var processorOptions = new ServiceBusProcessorOptions
-                {
-                    MaxConcurrentCalls = _configuration.MaxConcurrentProcess,
-                    AutoCompleteMessages = _configuration.AutoCompleteMessages,
-                };
+            DisposeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+        }
 
-                if (!string.IsNullOrWhiteSpace(_configuration.SubscriptionName))
-                {
-                    _processor = GetClient().CreateProcessor(_configuration.QueueNameOrTopic, _configuration.SubscriptionName, processorOptions);
-                }
-                else
-                {
-                    _processor = GetClient().CreateProcessor(_configuration.QueueNameOrTopic, processorOptions);
-                }
-            }
+        public async ValueTask DisposeAsync()
+        {
+            if (_queueClient != null)
+                await _queueClient.DisposeAsync();
 
-            return _processor;
+            if (_processor != null)
+                await _processor.DisposeAsync();
+
+            if (_administrationClient != null)
+                _administrationClient = null;
         }
 
         public async Task Enqueue(VQAzureQueueMessageBus<T> data, int delayInSeconds = 0)
@@ -127,18 +140,51 @@ namespace VQLib.Azure.ServiceBus
             processor.StartProcessingAsync();
         }
 
-        public void Dispose()
+        private ServiceBusAdministrationClient GetAdministrationClient()
         {
-            DisposeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (_administrationClient == null)
+            {
+                var connectionString = _configuration.ConnectionString ?? throw new ArgumentNullException(nameof(_configuration.ConnectionString));
+                _administrationClient = new ServiceBusAdministrationClient(connectionString);
+            }
+
+            return _administrationClient;
         }
 
-        public async ValueTask DisposeAsync()
+        private ServiceBusClient GetClient()
         {
-            if (_queueClient != null)
-                await _queueClient.DisposeAsync();
+            if (_queueClient == null)
+            {
+                if (string.IsNullOrWhiteSpace(_configuration.QueueNameOrTopic))
+                    throw new ArgumentNullException(nameof(_configuration.QueueNameOrTopic));
 
-            if (_processor != null)
-                await _processor.DisposeAsync();
+                _queueClient = new ServiceBusClient(_configuration.ConnectionString ?? throw new ArgumentNullException(nameof(_configuration.ConnectionString)));
+            }
+
+            return _queueClient;
+        }
+
+        private ServiceBusProcessor GetProcessor()
+        {
+            if (_processor == null)
+            {
+                var processorOptions = new ServiceBusProcessorOptions
+                {
+                    MaxConcurrentCalls = _configuration.MaxConcurrentProcess,
+                    AutoCompleteMessages = _configuration.AutoCompleteMessages,
+                };
+
+                if (!string.IsNullOrWhiteSpace(_configuration.SubscriptionName))
+                {
+                    _processor = GetClient().CreateProcessor(_configuration.QueueNameOrTopic, _configuration.SubscriptionName, processorOptions);
+                }
+                else
+                {
+                    _processor = GetClient().CreateProcessor(_configuration.QueueNameOrTopic, processorOptions);
+                }
+            }
+
+            return _processor;
         }
     }
 }

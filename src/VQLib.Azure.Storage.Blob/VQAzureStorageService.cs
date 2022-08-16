@@ -60,6 +60,16 @@ namespace VQLib.Azure.Storage.Blob
 
         public async Task<string> Upload(Stream data, string key, string? ContentType = null)
         {
+            using var memory = new MemoryStream();
+            if (data != null)
+            {
+                data.Seek(0, SeekOrigin.Begin);
+                await data.CopyToAsync(memory);
+                await memory.FlushAsync();
+                data.Seek(0, SeekOrigin.Begin);
+                memory.Seek(0, SeekOrigin.Begin);
+            }
+
             var (containerName, filePath) = SplitKey(key);
 
             var container = new BlobContainerClient(_connectionString, containerName);

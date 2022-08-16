@@ -1,18 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace VQLib.Util
+﻿namespace VQLib.Util
 {
     public static class VQConversionExtension
     {
-        public static List<Guid> StringToGuidList(this string text, params string[] separator) => !string.IsNullOrWhiteSpace(text)
-            ? new List<Guid>()
-            : text.Split(separator, StringSplitOptions.RemoveEmptyEntries).Select(x => x.StringToGuid()).ToList();
+        public static void CopyPropertiesTo<TSource, TDest>(this TSource source, TDest dest)
+        {
+            var sourceProperties = typeof(TSource).GetProperties().Where(x => x.CanRead).ToList();
+            var destProperties = typeof(TDest).GetProperties().Where(x => x.CanWrite).ToList();
 
-        public static Guid StringToGuid(this string x) => Guid.TryParse(x, out Guid result)
-            ? result
-            : Guid.Empty;
+            foreach (var destProperty in destProperties)
+            {
+                var property = destProperty;
+                var convertProperty = sourceProperties.FirstOrDefault(prop => prop.Name == property.Name);
+                if (convertProperty != null)
+                    convertProperty.SetValue(dest, Convert.ChangeType(destProperty.GetValue(source), convertProperty.PropertyType));
+            }
+        }
 
         public static byte[] StringHexToByte(this string @string, params string[] separators)
         {
@@ -31,5 +33,13 @@ namespace VQLib.Util
                 .Select(x => Convert.ToByte(stringWithoutSeparators.Substring(x, 2), 16))
                 .ToArray();
         }
+
+        public static Guid StringToGuid(this string x) => Guid.TryParse(x, out Guid result)
+            ? result
+            : Guid.Empty;
+
+        public static List<Guid> StringToGuidList(this string text, params string[] separator) => !string.IsNullOrWhiteSpace(text)
+                                    ? new List<Guid>()
+            : text.Split(separator, StringSplitOptions.RemoveEmptyEntries).Select(x => x.StringToGuid()).ToList();
     }
 }

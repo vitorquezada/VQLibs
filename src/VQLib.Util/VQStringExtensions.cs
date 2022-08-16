@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿using System.ComponentModel;
+using System.Globalization;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -16,53 +18,50 @@ namespace VQLib.Util
             NumberHandling = JsonNumberHandling.AllowReadingFromString,
         };
 
-        public static bool IsNullOrWhiteSpace(this string? text) => string.IsNullOrWhiteSpace(text);
-
-        public static bool IsNotNullOrWhiteSpace(this string? text) => !string.IsNullOrWhiteSpace(text);
-
-        public static string? IsNullOrWhiteSpaceOr(this string? text, string? then) => !string.IsNullOrWhiteSpace(text) ? text : then;
-
-        public static IEnumerable<string> Split(this string text, params string[] splitStrings)
+        public static bool CnpjIsValid(this string cnpj)
         {
-            if (!splitStrings.ListHasItem())
-                splitStrings = new string[] { "," };
+            int[] multiplicador1 = new int[12] { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
+            int[] multiplicador2 = new int[13] { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
+            int soma;
+            int resto;
+            string digito;
+            string tempCnpj;
 
-            return text.Split(splitStrings, StringSplitOptions.RemoveEmptyEntries);
+            cnpj = cnpj.OnlyNumbers();
+            if (cnpj.Length != 14)
+                return false;
+
+            if (cnpj.All(x => x == cnpj[0]))
+                return false;
+
+            tempCnpj = cnpj.Substring(0, 12);
+            soma = 0;
+            for (int i = 0; i < 12; i++)
+                soma += int.Parse(tempCnpj[i].ToString()) * multiplicador1[i];
+            resto = (soma % 11);
+            if (resto < 2)
+                resto = 0;
+            else
+                resto = 11 - resto;
+            digito = resto.ToString();
+            tempCnpj += digito;
+            soma = 0;
+            for (int i = 0; i < 13; i++)
+                soma += int.Parse(tempCnpj[i].ToString()) * multiplicador2[i];
+            resto = (soma % 11);
+            if (resto < 2)
+                resto = 0;
+            else
+                resto = 11 - resto;
+
+            digito += resto.ToString();
+
+            return cnpj.EndsWith(digito);
         }
 
-        public static string ToJson<T>(this T data, JsonSerializerOptions? options = null)
+        public static bool ContainsIgnoreCaseAndAccents(this string x1, string x2)
         {
-            return JsonSerializer.Serialize<T>(data, options ?? VQDefaultJsonOptions);
-        }
-
-        public static T? FromJson<T>(this string? value, JsonSerializerOptions? options = null)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return default(T);
-
-            return JsonSerializer.Deserialize<T>(value, options ?? VQDefaultJsonOptions);
-        }
-
-        public static async Task<T?> FromJson<T>(this Stream? value, JsonSerializerOptions? options = null)
-        {
-            if (value == null || value.Length <= 0)
-                return default(T);
-            return await JsonSerializer.DeserializeAsync<T>(value, options ?? VQDefaultJsonOptions);
-        }
-
-        public static bool EmailIsValid(this string value)
-        {
-            const string emailPattern = @"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$";
-
-            return !value.IsNullOrWhiteSpace() && Regex.IsMatch(value.Trim(), emailPattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-        }
-
-        public static string OnlyNumbers(this string text)
-        {
-            if (string.IsNullOrEmpty(text))
-                return text;
-
-            return Regex.Replace(text, @"[^0-9]+", string.Empty);
+            return RemoveAccents(x1).Contains(RemoveAccents(x2), StringComparison.CurrentCultureIgnoreCase);
         }
 
         public static bool CpfIsValid(this string cpf)
@@ -107,45 +106,43 @@ namespace VQLib.Util
             return cpf.EndsWith(digito);
         }
 
-        public static bool CnpjIsValid(this string cnpj)
+        public static bool EmailIsValid(this string value)
         {
-            int[] multiplicador1 = new int[12] { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
-            int[] multiplicador2 = new int[13] { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
-            int soma;
-            int resto;
-            string digito;
-            string tempCnpj;
+            const string emailPattern = @"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$";
 
-            cnpj = cnpj.OnlyNumbers();
-            if (cnpj.Length != 14)
-                return false;
+            return !value.IsNullOrWhiteSpace() && Regex.IsMatch(value.Trim(), emailPattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        }
 
-            if (cnpj.All(x => x == cnpj[0]))
-                return false;
+        public static string FormatCNPJ(this string CNPJ)
+        {
+            return Convert.ToUInt64(CNPJ).ToString("00'.'000'.'000'/'0000'-'00");
+        }
 
-            tempCnpj = cnpj.Substring(0, 12);
-            soma = 0;
-            for (int i = 0; i < 12; i++)
-                soma += int.Parse(tempCnpj[i].ToString()) * multiplicador1[i];
-            resto = (soma % 11);
-            if (resto < 2)
-                resto = 0;
-            else
-                resto = 11 - resto;
-            digito = resto.ToString();
-            tempCnpj += digito;
-            soma = 0;
-            for (int i = 0; i < 13; i++)
-                soma += int.Parse(tempCnpj[i].ToString()) * multiplicador2[i];
-            resto = (soma % 11);
-            if (resto < 2)
-                resto = 0;
-            else
-                resto = 11 - resto;
+        public static string FormatCPF(this string CPF)
+        {
+            return Convert.ToUInt64(CPF).ToString("000'.'000'.'000'-'00");
+        }
 
-            digito += resto.ToString();
+        public static T? FromJson<T>(this string? value, JsonSerializerOptions? options = null)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return default(T);
 
-            return cnpj.EndsWith(digito);
+            return JsonSerializer.Deserialize<T>(value, options ?? VQDefaultJsonOptions);
+        }
+
+        public static async Task<T?> FromJson<T>(this Stream? value, JsonSerializerOptions? options = null)
+        {
+            if (value == null || value.Length <= 0)
+                return default(T);
+            return await JsonSerializer.DeserializeAsync<T>(value, options ?? VQDefaultJsonOptions);
+        }
+
+        public static string GetDescription<T>(this T value) where T : struct
+        {
+            var valueName = value.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(valueName)) return string.Empty;
+            return typeof(T).GetField(valueName)?.GetCustomAttribute<DescriptionAttribute>()?.Description ?? valueName;
         }
 
         public static string GetMaskedEmail(this string email)
@@ -157,6 +154,20 @@ namespace VQLib.Util
                 return email;
 
             return Regex.Replace(Regex.Replace(email, group1, m => new string('*', m.Length)), group2, m => new string('*', m.Length));
+        }
+
+        public static bool IsNotNullOrWhiteSpace(this string? text) => !string.IsNullOrWhiteSpace(text);
+
+        public static bool IsNullOrWhiteSpace(this string? text) => string.IsNullOrWhiteSpace(text);
+
+        public static string? IsNullOrWhiteSpaceOr(this string? text, string? then) => !string.IsNullOrWhiteSpace(text) ? text : then;
+
+        public static string OnlyNumbers(this string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            return Regex.Replace(text, @"[^0-9]+", string.Empty);
         }
 
         public static string RemoveAccents(this string text)
@@ -176,19 +187,17 @@ namespace VQLib.Util
             return newText.Normalize(NormalizationForm.FormC);
         }
 
-        public static bool ContainsIgnoreCaseAndAccents(this string x1, string x2)
+        public static IEnumerable<string> Split(this string text, params string[] splitStrings)
         {
-            return RemoveAccents(x1).Contains(RemoveAccents(x2), StringComparison.CurrentCultureIgnoreCase);
+            if (!splitStrings.ListHasItem())
+                splitStrings = new string[] { "," };
+
+            return text.Split(splitStrings, StringSplitOptions.RemoveEmptyEntries);
         }
 
-        public static string FormatCNPJ(this string CNPJ)
+        public static string ToJson<T>(this T data, JsonSerializerOptions? options = null)
         {
-            return Convert.ToUInt64(CNPJ).ToString("00'.'000'.'000'/'0000'-'00");
-        }
-
-        public static string FormatCPF(this string CPF)
-        {
-            return Convert.ToUInt64(CPF).ToString("000'.'000'.'000'-'00");
+            return JsonSerializer.Serialize<T>(data, options ?? VQDefaultJsonOptions);
         }
     }
 }
