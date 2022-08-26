@@ -39,7 +39,9 @@ namespace VQLib.Azure.ServiceBus
                 var existedQueue = await client.GetQueueAsync(_configuration.QueueNameOrTopic);
                 var propertiesUpdate = existedQueue?.Value ?? throw new ArgumentNullException();
 
-                properties.CopyPropertiesTo(propertiesUpdate);
+                properties.CopyPropertiesTo(propertiesUpdate, new[] { nameof(properties.UserMetadata) });
+                if (properties.UserMetadata != null)
+                    propertiesUpdate.UserMetadata = properties.UserMetadata;
 
                 var responseUpdate = await client.UpdateQueueAsync(propertiesUpdate);
                 return responseUpdate.Value;

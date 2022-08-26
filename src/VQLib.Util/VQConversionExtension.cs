@@ -2,17 +2,19 @@
 {
     public static class VQConversionExtension
     {
-        public static void CopyPropertiesTo<TSource, TDest>(this TSource source, TDest dest)
+        public static void CopyPropertiesTo<TSource, TDest>(this TSource source, TDest dest, string[]? propertiesToIgnore = null)
         {
             var sourceProperties = typeof(TSource).GetProperties().Where(x => x.CanRead).ToList();
             var destProperties = typeof(TDest).GetProperties().Where(x => x.CanWrite).ToList();
 
             foreach (var destProperty in destProperties)
             {
-                var property = destProperty;
-                var convertProperty = sourceProperties.FirstOrDefault(prop => prop.Name == property.Name);
-                if (convertProperty != null)
-                    convertProperty.SetValue(dest, Convert.ChangeType(destProperty.GetValue(source), convertProperty.PropertyType));
+                if (propertiesToIgnore != null && propertiesToIgnore.Contains(destProperty.Name))
+                    continue;
+
+                var sourceProperty = sourceProperties.FirstOrDefault(s => s.Name == destProperty.Name);
+                if (sourceProperty != null)
+                    destProperty.SetValue(dest, sourceProperty.GetValue(source));
             }
         }
 
