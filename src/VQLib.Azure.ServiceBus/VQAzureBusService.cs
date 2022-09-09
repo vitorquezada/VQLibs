@@ -70,7 +70,7 @@ namespace VQLib.Azure.ServiceBus
                 _administrationClient = null;
         }
 
-        public async Task Enqueue(VQAzureQueueMessageBus<T> data, int delayInSeconds = 0)
+        public async Task Enqueue(T data, int delayInSeconds = 0)
         {
             var client = GetClient();
 
@@ -84,7 +84,7 @@ namespace VQLib.Azure.ServiceBus
             await sender.SendMessageAsync(message);
         }
 
-        public async Task Enqueue(IEnumerable<VQAzureQueueMessageBus<T>> dataList, int delayInSeconds = 0)
+        public async Task Enqueue(IEnumerable<T> dataList, int delayInSeconds = 0)
         {
             if (dataList == null || !dataList.Any())
                 return;
@@ -120,15 +120,22 @@ namespace VQLib.Azure.ServiceBus
             }
         }
 
+        public async Task<QueueRuntimeProperties> GetRuntimeProperties()
+        {
+            var client = GetAdministrationClient();
+            var queueResponse = await client.GetQueueRuntimePropertiesAsync(_configuration.QueueNameOrTopic);
+            return queueResponse.Value;
+        }
+
         public void Process(
-            Func<ProcessMessageEventArgs, VQAzureQueueMessageBus<T>?, IServiceScope, Task> actionProcess,
+            Func<ProcessMessageEventArgs, T?, IServiceScope, Task> actionProcess,
             Func<ProcessErrorEventArgs, IServiceScope, Task> actionException)
         {
             var processor = GetProcessor();
 
             processor.ProcessMessageAsync += async (args) =>
             {
-                var msg = args.Message.Body.ToString().FromJson<VQAzureQueueMessageBus<T>>();
+                var msg = args.Message.Body.ToString().FromJson<T>();
                 using var scope = _serviceProvider.CreateScope();
                 await actionProcess(args, msg, scope);
             };
