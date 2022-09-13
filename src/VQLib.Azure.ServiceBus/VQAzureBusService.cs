@@ -11,7 +11,6 @@ namespace VQLib.Azure.ServiceBus
         private readonly VQServiceBusConfiguration _configuration;
         private readonly IServiceProvider _serviceProvider;
 
-        private ServiceBusAdministrationClient? _administrationClient;
         private ServiceBusProcessor? _processor;
         private ServiceBusClient? _queueClient;
 
@@ -65,9 +64,6 @@ namespace VQLib.Azure.ServiceBus
 
             if (_processor != null)
                 await _processor.DisposeAsync();
-
-            if (_administrationClient != null)
-                _administrationClient = null;
         }
 
         public async Task Enqueue(T data, int delayInSeconds = 0)
@@ -151,13 +147,8 @@ namespace VQLib.Azure.ServiceBus
 
         private ServiceBusAdministrationClient GetAdministrationClient()
         {
-            if (_administrationClient == null)
-            {
-                var connectionString = _configuration.ConnectionString ?? throw new ArgumentNullException(nameof(_configuration.ConnectionString));
-                _administrationClient = new ServiceBusAdministrationClient(connectionString);
-            }
-
-            return _administrationClient;
+            var connectionString = _configuration.ConnectionString ?? throw new ArgumentNullException(nameof(_configuration.ConnectionString));
+            return new ServiceBusAdministrationClient(connectionString);
         }
 
         private ServiceBusClient GetClient()
