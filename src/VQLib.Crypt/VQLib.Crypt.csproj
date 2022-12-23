@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="libsodium" Version="1.0.18.2" />
+    <PackageReference Include="libsodium" Version="1.0.18.4" />
   </ItemGroup>
 
 </Project>
