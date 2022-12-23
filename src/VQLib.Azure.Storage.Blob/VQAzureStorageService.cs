@@ -12,40 +12,45 @@ namespace VQLib.Azure.Storage.Blob
             _connectionString = config.StorageConnectionString ?? throw new ArgumentException($"Property {config.StorageConnectionString} can not be null or whitespace.", nameof(config));
         }
 
-        public async Task Delete(string key)
+        public async Task Delete(
+            string key,
+            CancellationToken cancellationToken = default)
         {
             var (containerName, filePath) = SplitKey(key);
 
             var container = new BlobContainerClient(_connectionString, containerName);
 
-            var containerExists = await container.ExistsAsync();
+            var containerExists = await container.ExistsAsync(cancellationToken);
             if (!containerExists.Value)
                 return;
 
             var blob = container.GetBlobClient(filePath);
 
-            await blob.DeleteIfExistsAsync();
+            await blob.DeleteIfExistsAsync(cancellationToken: cancellationToken);
         }
 
-        public async Task<MemoryStream?> Get(string key, MemoryStream? @default = null)
+        public async Task<MemoryStream?> Get(
+            string key,
+            MemoryStream? @default = null,
+            CancellationToken cancellationToken = default)
         {
             var (containerName, filePath) = SplitKey(key);
 
             var container = new BlobContainerClient(_connectionString, containerName);
 
-            var containerExists = await container.ExistsAsync();
+            var containerExists = await container.ExistsAsync(cancellationToken);
             if (!containerExists.Value)
                 return @default;
 
             var blob = container.GetBlobClient(filePath);
 
-            var blobExists = await blob.ExistsAsync();
+            var blobExists = await blob.ExistsAsync(cancellationToken);
             if (!blobExists.Value)
                 return @default;
 
             var stream = new MemoryStream();
 
-            await blob.DownloadToAsync(stream);
+            await blob.DownloadToAsync(stream, cancellationToken);
 
             return stream;
         }
@@ -58,14 +63,43 @@ namespace VQLib.Azure.Storage.Blob
             return Task.FromResult<string?>(key);
         }
 
-        public async Task<string> Upload(Stream data, string key, string? ContentType = null, IDictionary<string, string>? tags = null)
+        public async Task<List<BlobItem>> ListByPrefix(
+            string prefixKey,
+            CancellationToken cancellationToken = default)
+        {
+            var blobList = new List<BlobItem>();
+
+            var (containerName, filePath) = SplitKey(prefixKey);
+            var container = new BlobContainerClient(_connectionString, containerName);
+
+            var blobs = container.GetBlobsAsync(prefix: filePath, cancellationToken: cancellationToken)
+                .GetAsyncEnumerator(cancellationToken);
+            try
+            {
+                while (await blobs.MoveNextAsync())
+                    blobList.Add(blobs.Current);
+            }
+            finally
+            {
+                await blobs.DisposeAsync();
+            }
+
+            return blobList;
+        }
+
+        public async Task<string> Upload(
+            Stream data,
+            string key,
+            string? ContentType = null,
+            IDictionary<string, string>? tags = null,
+            CancellationToken cancellationToken = default)
         {
             using var memory = new MemoryStream();
             if (data != null)
             {
                 data.Seek(0, SeekOrigin.Begin);
-                await data.CopyToAsync(memory);
-                await memory.FlushAsync();
+                await data.CopyToAsync(memory, cancellationToken);
+                await memory.FlushAsync(cancellationToken);
                 data.Seek(0, SeekOrigin.Begin);
                 memory.Seek(0, SeekOrigin.Begin);
             }
@@ -74,11 +108,11 @@ namespace VQLib.Azure.Storage.Blob
 
             var container = new BlobContainerClient(_connectionString, containerName);
 
-            await container.CreateIfNotExistsAsync(PublicAccessType.None);
+            await container.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
 
             var blob = container.GetBlobClient(filePath);
 
-            await blob.UploadAsync(data);
+            await blob.UploadAsync(data, cancellationToken);
 
             if (!string.IsNullOrWhiteSpace(ContentType))
             {
@@ -87,12 +121,12 @@ namespace VQLib.Azure.Storage.Blob
                     ContentType = ContentType,
                 };
 
-                await blob.SetHttpHeadersAsync(httpHeader);
+                await blob.SetHttpHeadersAsync(httpHeader, cancellationToken: cancellationToken);
             }
 
             if (tags != null && tags.Any())
             {
-                await blob.SetTagsAsync(tags);
+                await blob.SetTagsAsync(tags, cancellationToken: cancellationToken);
             }
 
             return blob.Uri.AbsoluteUri;
