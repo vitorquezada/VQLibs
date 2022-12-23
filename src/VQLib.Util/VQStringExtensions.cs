@@ -1,12 +1,4 @@
-﻿using System.ComponentModel;
-using System.Globalization;
-using System.Reflection;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
-
-namespace VQLib.Util
+﻿namespace VQLib.Util
 {
     public static class VQStringExtensions
     {
@@ -62,6 +54,11 @@ namespace VQLib.Util
         public static bool ContainsIgnoreCaseAndAccents(this string x1, string x2)
         {
             return RemoveAccents(x1).Contains(RemoveAccents(x2), StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        public static bool EqualsIgnoreCaseAndAccents(this string x1, string x2)
+        {
+            return RemoveAccents(x1).Equals(RemoveAccents(x2), StringComparison.CurrentCultureIgnoreCase);
         }
 
         public static bool CpfIsValid(this string cpf)

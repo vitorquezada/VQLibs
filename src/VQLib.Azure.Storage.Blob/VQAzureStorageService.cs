@@ -58,7 +58,7 @@ namespace VQLib.Azure.Storage.Blob
             return Task.FromResult<string?>(key);
         }
 
-        public async Task<string> Upload(Stream data, string key, string? ContentType = null)
+        public async Task<string> Upload(Stream data, string key, string? ContentType = null, IDictionary<string, string>? tags = null)
         {
             using var memory = new MemoryStream();
             if (data != null)
@@ -88,6 +88,11 @@ namespace VQLib.Azure.Storage.Blob
                 };
 
                 await blob.SetHttpHeadersAsync(httpHeader);
+            }
+
+            if (tags != null && tags.Any())
+            {
+                await blob.SetTagsAsync(tags);
             }
 
             return blob.Uri.AbsoluteUri;

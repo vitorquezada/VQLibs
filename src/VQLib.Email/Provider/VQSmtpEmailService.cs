@@ -1,9 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Net.Mail;
-using System.Threading.Tasks;
-using VQLib.Email.Enum;
+﻿using VQLib.Email.Enum;
 using VQLib.Email.Model;
 using VQLib.Util;
 
@@ -11,17 +6,39 @@ namespace VQLib.Email.Provider
 {
     public class VQSmtpEmailService : VQBaseEmailService, IVQEmailService, IDisposable
     {
+        private SmtpClient? _client = null;
+
         public VQEmailProvider GetEmailProvider => VQEmailProvider.SMTP;
 
-        private VQSmtpConfig _config { get; set; }
+        private VQSmtpConfig? _config { get; set; }
 
-        private SmtpClient _client = null;
-
-        private SmtpClient GetClient => _client ?? (_client = new SmtpClient(_config.Host, _config.Port)
+        private SmtpClient GetClient
         {
-            Credentials = new NetworkCredential(_config.UserName, _config.Password),
-            EnableSsl = _config.EnableSsl,
-        });
+            get
+            {
+                if (_client == null)
+                {
+                    if (_config == null)
+                        throw new ArgumentNullException(nameof(_config));
+
+                    _client = new SmtpClient(_config.Host, _config.Port)
+                    {
+                        Credentials = new NetworkCredential(_config.UserName, _config.Password),
+                        EnableSsl = _config.EnableSsl,
+                    };
+                }
+                return _client;
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_client != null)
+            {
+                _client.Dispose();
+                _client = null;
+            }
+        }
 
         public async Task<VQSendEmailResult> SendEmail(VQEmail email)
         {
@@ -71,15 +88,6 @@ namespace VQLib.Email.Provider
             Dispose();
 
             _config = model;
-        }
-
-        public void Dispose()
-        {
-            if (_client != null)
-            {
-                _client.Dispose();
-                _client = null;
-            }
         }
     }
 }

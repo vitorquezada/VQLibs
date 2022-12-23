@@ -1,4 +1,6 @@
-﻿namespace VQLib.Util
+﻿using System.Reflection;
+
+namespace VQLib.Util
 {
     public static class VQConversionExtension
     {
@@ -16,6 +18,14 @@
                 if (sourceProperty != null)
                     destProperty.SetValue(dest, sourceProperty.GetValue(source));
             }
+        }
+
+        public static List<T> GetEnums<T>() where T : struct
+        {
+            return typeof(T)
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Select(x => Enum.Parse<T>(x.Name))
+                .ToList();
         }
 
         public static byte[] StringHexToByte(this string @string, params string[] separators)

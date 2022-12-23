@@ -20,6 +20,13 @@ namespace VQLib.Azure.ServiceBus
             _serviceProvider = serviceProvider;
         }
 
+        public async Task<QueueProperties> CreateQueue(CreateQueueOptions model)
+        {
+            var client = GetAdministrationClient();
+            var existResult = await client.CreateQueueAsync(model);
+            return existResult.Value;
+        }
+
         public async Task<QueueProperties> CreateUpdateQueue(CreateQueueOptions properties)
         {
             if (!string.IsNullOrWhiteSpace(_configuration.SubscriptionName))
@@ -116,6 +123,17 @@ namespace VQLib.Azure.ServiceBus
             }
         }
 
+        public async Task<QueueProperties?> GetQueueProperties()
+        {
+            var client = GetAdministrationClient();
+            var existResult = await client.QueueExistsAsync(_configuration.QueueNameOrTopic);
+            if (!existResult.Value)
+                return null;
+
+            var existedQueue = await client.GetQueueAsync(_configuration.QueueNameOrTopic);
+            return existedQueue?.Value ?? throw new ArgumentNullException();
+        }
+
         public async Task<QueueRuntimeProperties> GetRuntimeProperties()
         {
             var client = GetAdministrationClient();
@@ -143,6 +161,13 @@ namespace VQLib.Azure.ServiceBus
             };
 
             processor.StartProcessingAsync();
+        }
+
+        public async Task<QueueProperties> UpdateQueue(QueueProperties model)
+        {
+            var client = GetAdministrationClient();
+            var existResult = await client.UpdateQueueAsync(model);
+            return existResult.Value;
         }
 
         private ServiceBusAdministrationClient GetAdministrationClient()
