@@ -1,4 +1,6 @@
-﻿using VQLib.Email.Enum;
+﻿using System.Net;
+using System.Net.Mail;
+using VQLib.Email.Enum;
 using VQLib.Email.Model;
 using VQLib.Util;
 

@@ -1,4 +1,12 @@
-﻿namespace VQLib.Util
+﻿using System.ComponentModel;
+using System.Globalization;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+
+namespace VQLib.Util
 {
     public static class VQStringExtensions
     {
@@ -56,11 +64,6 @@
             return RemoveAccents(x1).Contains(RemoveAccents(x2), StringComparison.CurrentCultureIgnoreCase);
         }
 
-        public static bool EqualsIgnoreCaseAndAccents(this string x1, string x2)
-        {
-            return RemoveAccents(x1).Equals(RemoveAccents(x2), StringComparison.CurrentCultureIgnoreCase);
-        }
-
         public static bool CpfIsValid(this string cpf)
         {
             int[] multiplicador1 = new int[9] { 10, 9, 8, 7, 6, 5, 4, 3, 2 };
@@ -108,6 +111,11 @@
             const string emailPattern = @"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$";
 
             return !value.IsNullOrWhiteSpace() && Regex.IsMatch(value.Trim(), emailPattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        }
+
+        public static bool EqualsIgnoreCaseAndAccents(this string x1, string x2)
+        {
+            return RemoveAccents(x1).Equals(RemoveAccents(x2), StringComparison.CurrentCultureIgnoreCase);
         }
 
         public static string FormatCNPJ(this string CNPJ)
