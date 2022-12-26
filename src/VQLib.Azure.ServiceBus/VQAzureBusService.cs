@@ -73,7 +73,7 @@ namespace VQLib.Azure.ServiceBus
                 await _processor.DisposeAsync();
         }
 
-        public async Task Enqueue(T data, int delayInSeconds = 0)
+        public virtual async Task Enqueue(T data, int delayInSeconds = 0)
         {
             var client = GetClient();
 
@@ -87,7 +87,7 @@ namespace VQLib.Azure.ServiceBus
             await sender.SendMessageAsync(message);
         }
 
-        public async Task Enqueue(IEnumerable<T> dataList, int delayInSeconds = 0)
+        public virtual async Task Enqueue(IEnumerable<T> dataList, int delayInSeconds = 0)
         {
             if (dataList == null || !dataList.Any())
                 return;
@@ -141,7 +141,7 @@ namespace VQLib.Azure.ServiceBus
             return queueResponse.Value;
         }
 
-        public void Process(
+        public virtual void Process(
             Func<ProcessMessageEventArgs, T?, IServiceScope, Task> actionProcess,
             Func<ProcessErrorEventArgs, IServiceScope, Task> actionException)
         {
