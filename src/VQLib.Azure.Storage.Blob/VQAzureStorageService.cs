@@ -1,3 +1,4 @@
+using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -92,6 +93,7 @@ namespace VQLib.Azure.Storage.Blob
             string key,
             string? ContentType = null,
             IDictionary<string, string>? tags = null,
+            TimeSpan? timeout = null,
             CancellationToken cancellationToken = default)
         {
             using var memory = new MemoryStream();
@@ -106,13 +108,25 @@ namespace VQLib.Azure.Storage.Blob
 
             var (containerName, filePath) = SplitKey(key);
 
-            var container = new BlobContainerClient(_connectionString, containerName);
+            var options = new BlobClientOptions();
+            if (timeout.HasValue)
+                options.Retry.NetworkTimeout = timeout.Value;
+            var container = new BlobContainerClient(_connectionString, containerName, options);
 
             await container.CreateIfNotExistsAsync(PublicAccessType.None, cancellationToken: cancellationToken);
 
             var blob = container.GetBlobClient(filePath);
 
-            await blob.UploadAsync(data, cancellationToken);
+            var optionsUpload = new BlobUploadOptions
+            {
+                TransferOptions = new StorageTransferOptions
+                {
+                    MaximumConcurrency = 2 * Environment.ProcessorCount,
+                    InitialTransferSize = 100 * 1024 * 1024,
+                    MaximumTransferSize = 100 * 1024 * 1024,
+                },
+            };
+            await blob.UploadAsync(data, optionsUpload, cancellationToken);
 
             if (!string.IsNullOrWhiteSpace(ContentType))
             {

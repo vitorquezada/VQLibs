@@ -24,6 +24,7 @@ namespace VQLib.Azure.Storage.Blob
             string key,
             string? ContentType = null,
             IDictionary<string, string>? tags = null,
+            TimeSpan? timeout = null,
             CancellationToken cancellationToken = default);
     }
 }
