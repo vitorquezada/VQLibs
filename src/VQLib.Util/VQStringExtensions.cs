@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using VQLib.Util.JsonConverters;
 
 namespace VQLib.Util
 {
@@ -16,6 +17,10 @@ namespace VQLib.Util
             AllowTrailingCommas = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             NumberHandling = JsonNumberHandling.AllowReadingFromString,
+            Converters =
+            {
+                new DateOnlyJsonConverter(),
+            }
         };
 
         public static bool CnpjIsValid(this string cnpj)
