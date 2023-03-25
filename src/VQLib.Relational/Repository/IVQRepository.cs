@@ -1,4 +1,5 @@
-﻿using VQLib.Relational.Entity;
+﻿using Microsoft.EntityFrameworkCore;
+using VQLib.Relational.Entity;
 using VQLib.Relational.Specification;
 using X.PagedList;
 
@@ -80,6 +81,8 @@ namespace VQLib.Relational.Repository
         IQueryable<T> GetCollection();
 
         IQueryable<T> GetCollectionUnsafe();
+
+        DbSet<T> GetDbSet();
 
         Task<long> GetIdByKey(string key, CancellationToken cancellationToken = default);
 

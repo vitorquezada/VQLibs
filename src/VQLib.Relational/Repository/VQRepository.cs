@@ -31,6 +31,8 @@ namespace VQLib.Relational.Repository
 
         public virtual IQueryable<T> GetCollectionUnsafe() => _dbContext.Set<T>();
 
+        public virtual DbSet<T> GetDbSet() => _dbContext.Set<T>();
+
         #region Any
 
         public virtual Task<bool> Any(IVQSpec<T> spec, CancellationToken cancellationToken = default) => SetSpecification(spec).AnyAsync(cancellationToken);
