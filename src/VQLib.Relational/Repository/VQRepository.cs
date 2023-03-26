@@ -119,10 +119,15 @@ namespace VQLib.Relational.Repository
 
         public virtual async Task<T> InsertUpdate(T entity, CancellationToken cancellationToken = default)
         {
+            return await InsertUpdate(entity, true, cancellationToken);
+        }
+
+        public async Task<T> InsertUpdate(T entity, bool saveChanges, CancellationToken cancellationToken = default)
+        {
             var exist = entity.Id > 0
                 ? await GetCollectionUnsafe().IgnoreQueryFilters().AnyAsync(x => x.Id == entity.Id, cancellationToken)
                 : false;
-            return await InternalInsertUpdate(entity, true, exist, cancellationToken);
+            return await InternalInsertUpdate(entity, saveChanges, exist, cancellationToken);
         }
 
         public virtual async Task<IEnumerable<T>> InsertUpdate(IList<T> entities, CancellationToken cancellationToken = default)
@@ -158,18 +163,34 @@ namespace VQLib.Relational.Repository
 
         public virtual async Task<int> Delete(long id, CancellationToken cancellationToken = default)
         {
+            return await Delete(id, true, cancellationToken);
+        }
+
+        public virtual async Task<int> Delete(long id, bool saveChanges, CancellationToken cancellationToken = default)
+        {
             var entity = await _dbContext.Set<T>().FindAsync(new object[] { id }, cancellationToken);
             if (entity == null)
                 return 0;
             _dbContext.Set<T>().Remove(entity);
-            return await _dbContext.SaveChangesAsync(cancellationToken);
+            if (saveChanges)
+                return await _dbContext.SaveChangesAsync(cancellationToken);
+            else
+                return 0;
         }
 
         public virtual async Task<int> Delete(IEnumerable<long> ids, CancellationToken cancellationToken = default)
         {
+            return await Delete(ids, true, cancellationToken);
+        }
+
+        public virtual async Task<int> Delete(IEnumerable<long> ids, bool saveChanges, CancellationToken cancellationToken = default)
+        {
             var entities = await _dbContext.Set<T>().Where(x => ids.Contains(x.Id)).ToListAsync();
             _dbContext.Set<T>().RemoveRange(entities);
-            return await _dbContext.SaveChangesAsync(cancellationToken);
+            if (saveChanges)
+                return await _dbContext.SaveChangesAsync(cancellationToken);
+            else
+                return 0;
         }
 
         #endregion Delete

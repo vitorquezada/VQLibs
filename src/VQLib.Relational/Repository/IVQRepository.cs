@@ -56,7 +56,11 @@ namespace VQLib.Relational.Repository
 
         Task<int> Delete(long id, CancellationToken cancellationToken = default);
 
+        Task<int> Delete(long id, bool saveChanges, CancellationToken cancellationToken = default);
+
         Task<int> Delete(IEnumerable<long> ids, CancellationToken cancellationToken = default);
+
+        Task<int> Delete(IEnumerable<long> ids, bool saveChanges, CancellationToken cancellationToken = default);
 
         Task<T> First(IVQSpec<T> spec, CancellationToken cancellationToken = default);
 
@@ -87,6 +91,8 @@ namespace VQLib.Relational.Repository
         Task<long> GetIdByKey(string key, CancellationToken cancellationToken = default);
 
         Task<T> InsertUpdate(T entity, CancellationToken cancellationToken = default);
+
+        Task<T> InsertUpdate(T entity, bool saveChanges, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<T>> InsertUpdate(IList<T> entities, CancellationToken cancellationToken = default);
 
