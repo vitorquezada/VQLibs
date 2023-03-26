@@ -9,8 +9,6 @@ namespace VQLib.Relational
     {
         public const string IS_DELETED_COLUMN_NAME = "Deleted";
 
-        protected abstract long GetTenantId { get; }
-
         public VQDbContext() : base()
         {
         }
@@ -18,6 +16,8 @@ namespace VQLib.Relational
         public VQDbContext(DbContextOptions options) : base(options)
         {
         }
+
+        protected abstract long GetTenantId { get; }
 
         public override int SaveChanges(bool acceptAllChangesOnSuccess)
         {
@@ -31,6 +31,46 @@ namespace VQLib.Relational
             return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
 
+        protected virtual bool HasProperty(EntityEntry entry, string propertyName)
+        {
+            // TODO: Melhorar método com cache
+            return entry.Properties.Any(x => x.Metadata.Name == propertyName);
+        }
+
+        protected virtual void SetCreateUpdatedAt(EntityEntry entry)
+        {
+            var dateTime = new VQDateTimeOffsetUtcGenerator().Next(entry);
+
+            if (entry.State == EntityState.Added && HasProperty(entry, nameof(VQBaseEntity.CreatedDate)))
+                entry.CurrentValues[nameof(VQBaseEntity.CreatedDate)] = dateTime;
+
+            if ((entry.State == EntityState.Added || entry.State == EntityState.Modified) && HasProperty(entry, nameof(VQBaseEntity.UpdatedDate)))
+                entry.CurrentValues[nameof(VQBaseEntity.UpdatedDate)] = dateTime;
+        }
+
+        protected virtual void SetSoftDelete(EntityEntry entry)
+        {
+            if (entry.State == EntityState.Deleted)
+            {
+                var hasDeletedColumn = HasProperty(entry, IS_DELETED_COLUMN_NAME);
+                if (hasDeletedColumn)
+                {
+                    entry.State = EntityState.Modified;
+                    entry.CurrentValues[IS_DELETED_COLUMN_NAME] = true;
+                }
+            }
+        }
+
+        protected virtual void SetTenantId(EntityEntry entry)
+        {
+            if (HasProperty(entry, nameof(VQBaseEntityTenant.TenantId)))
+            {
+                var currentValue = (long?)entry.CurrentValues[nameof(VQBaseEntityTenant.TenantId)] ?? 0;
+                if (currentValue == 0)
+                    entry.CurrentValues[nameof(VQBaseEntityTenant.TenantId)] = GetTenantId;
+            }
+        }
+
         private void CustomBehaviorsOnSaveChanges()
         {
             var entries = ChangeTracker.Entries();
@@ -40,35 +80,6 @@ namespace VQLib.Relational
                 SetSoftDelete(entry);
                 SetCreateUpdatedAt(entry);
                 SetTenantId(entry);
-            }
-        }
-
-        protected virtual void SetTenantId(EntityEntry entry)
-        {
-            if (entry.CurrentValues.Properties.Any(x => x.Name == nameof(VQBaseEntityTenant.TenantId)))
-            {
-                var currentValue = (long?)entry.CurrentValues[nameof(VQBaseEntityTenant.TenantId)] ?? 0;
-                if (currentValue == 0)
-                    entry.CurrentValues[nameof(VQBaseEntityTenant.TenantId)] = GetTenantId;
-            }
-        }
-
-        protected virtual void SetCreateUpdatedAt(EntityEntry entry)
-        {
-            var dateTime = new VQDateTimeOffsetUtcGenerator().Next(entry);
-            if (entry.State == EntityState.Added)
-                entry.CurrentValues[nameof(VQBaseEntity.CreatedDate)] = dateTime;
-
-            if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
-                entry.CurrentValues[nameof(VQBaseEntity.UpdatedDate)] = dateTime;
-        }
-
-        protected virtual void SetSoftDelete(EntityEntry entry)
-        {
-            if (entry.State == EntityState.Deleted)
-            {
-                entry.State = EntityState.Modified;
-                entry.CurrentValues[IS_DELETED_COLUMN_NAME] = true;
             }
         }
     }
