@@ -14,7 +14,7 @@ namespace VQLib.Util
 
             if (!_cacheCustomAttribute.ContainsKey($"{type.FullName}.{propertyName}"))
             {
-                var attribute = type.GetProperty(propertyName)?.GetCustomAttribute<TAttribute>(true);
+                var attribute = type.GetMember(propertyName).FirstOrDefault()?.GetCustomAttribute<TAttribute>(true);
                 if (attribute == null)
                     throw new NullReferenceException();
                 return attribute;
