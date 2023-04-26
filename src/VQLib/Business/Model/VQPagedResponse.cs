@@ -6,43 +6,61 @@ namespace VQLib.Business.Model
 {
     public class VQPagedResponse<T> : IPagedList
     {
-        private readonly StaticPagedList<T> _pageList;
+        public VQPagedResponse()
+        {
+            FillModel(new StaticPagedList<T>(new List<T>(), 1, 1, 0));
+        }
 
         public VQPagedResponse(IPagedList<T> pageList)
         {
-            _pageList = new StaticPagedList<T>(pageList.ToList(), pageList);
+            FillModel(new StaticPagedList<T>(pageList.ToList(), pageList));
         }
 
         public VQPagedResponse(IEnumerable<T> subset, IPagedList metaData)
         {
-            _pageList = new StaticPagedList<T>(subset, metaData);
+            FillModel(new StaticPagedList<T>(subset, metaData));
         }
 
         public VQPagedResponse(IEnumerable<T> subset, int pageNumber, int pageSize, int totalItemCount)
         {
-            _pageList = new StaticPagedList<T>(subset, pageNumber, pageSize, totalItemCount);
+            FillModel(new StaticPagedList<T>(subset, pageNumber, pageSize, totalItemCount));
         }
 
-        public List<T> Data { get => _pageList.ToList(); }
+        public List<T> Data { get; set; }
 
-        public int PageCount { get => _pageList.PageCount; }
+        public int FirstItemOnPage { get; set; }
 
-        public int TotalItemCount { get => _pageList.TotalItemCount; }
+        public bool HasNextPage { get; set; }
 
-        public int PageNumber { get => _pageList.PageNumber; }
+        public bool HasPreviousPage { get; set; }
 
-        public int PageSize { get => _pageList.PageSize; }
+        public bool IsFirstPage { get; set; }
 
-        public bool HasPreviousPage { get => _pageList.HasPreviousPage; }
+        public bool IsLastPage { get; set; }
 
-        public bool HasNextPage { get => _pageList.HasNextPage; }
+        public int LastItemOnPage { get; set; }
 
-        public bool IsFirstPage { get => _pageList.IsFirstPage; }
+        public int PageCount { get; set; }
 
-        public bool IsLastPage { get => _pageList.IsLastPage; }
+        public int PageNumber { get; set; }
 
-        public int FirstItemOnPage { get => _pageList.FirstItemOnPage; }
+        public int PageSize { get; set; }
 
-        public int LastItemOnPage { get => _pageList.LastItemOnPage; }
+        public int TotalItemCount { get; set; }
+
+        private void FillModel(StaticPagedList<T> pagedList)
+        {
+            Data = pagedList.ToList();
+            FirstItemOnPage = pagedList.FirstItemOnPage;
+            HasNextPage = pagedList.HasNextPage;
+            HasPreviousPage = pagedList.HasPreviousPage;
+            IsFirstPage = pagedList.IsFirstPage;
+            IsLastPage = pagedList.IsLastPage;
+            LastItemOnPage = pagedList.LastItemOnPage;
+            PageCount = pagedList.PageCount;
+            PageNumber = pagedList.PageNumber;
+            PageSize = pagedList.PageSize;
+            TotalItemCount = pagedList.TotalItemCount;
+        }
     }
 }

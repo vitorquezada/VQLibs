@@ -85,15 +85,15 @@ namespace VQLib.Relational.Repository
 
         public virtual async Task<IEnumerable<T>> Get(CancellationToken cancellationToken = default) => await GetCollection().ToListAsync(cancellationToken);
 
-        public virtual Task<IPagedList<T>> Get(int pageNumber, int pageSize, CancellationToken cancellationToken = default) => GetCollection().ToPagedListAsync(pageNumber, pageSize, cancellationToken);
+        public virtual Task<IPagedList<T>> Get(int pageNumber, int pageSize, CancellationToken cancellationToken = default) => GetCollection().ToPagedListAsync(pageNumber, pageSize, null, cancellationToken);
 
         public virtual async Task<IEnumerable<T>> Get(IVQSpec<T> spec, CancellationToken cancellationToken = default) => await SetSpecification(spec).ToListAsync(cancellationToken);
 
-        public virtual Task<IPagedList<T>> Get(IVQSpec<T> spec, int pageNumber, int pageSize, CancellationToken cancellationToken = default) => SetSpecification(spec).ToPagedListAsync(pageNumber, pageSize, cancellationToken);
+        public virtual Task<IPagedList<T>> Get(IVQSpec<T> spec, int pageNumber, int pageSize, CancellationToken cancellationToken = default) => SetSpecification(spec).ToPagedListAsync(pageNumber, pageSize, null, cancellationToken);
 
         public virtual async Task<IEnumerable<TDest>> Get<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default) => await SetSpecification(spec).ToListAsync(cancellationToken);
 
-        public virtual Task<IPagedList<TDest>> Get<TDest>(IVQSpecTo<T, TDest> spec, int pageNumber, int pageSize, CancellationToken cancellationToken = default) => SetSpecification(spec).ToPagedListAsync(pageNumber, pageSize, cancellationToken);
+        public virtual Task<IPagedList<TDest>> Get<TDest>(IVQSpecTo<T, TDest> spec, int pageNumber, int pageSize, CancellationToken cancellationToken = default) => SetSpecification(spec).ToPagedListAsync(pageNumber, pageSize, null, cancellationToken);
 
         public Task<long> GetIdByKey(string key, CancellationToken cancellationToken = default) => GetCollectionUnsafe().Where(x => x.Key == key).Select(x => x.Id).FirstOrDefaultAsync();
 
@@ -103,15 +103,15 @@ namespace VQLib.Relational.Repository
 
         public virtual async Task<IEnumerable<T>> GetUnsafe(CancellationToken cancellationToken = default) => await GetCollectionUnsafe().ToListAsync(cancellationToken);
 
-        public virtual Task<IPagedList<T>> GetUnsafe(int pageNumber, int pageSize, CancellationToken cancellationToken = default) => GetCollectionUnsafe().ToPagedListAsync(pageNumber, pageSize, cancellationToken);
+        public virtual Task<IPagedList<T>> GetUnsafe(int pageNumber, int pageSize, CancellationToken cancellationToken = default) => GetCollectionUnsafe().ToPagedListAsync(pageNumber, pageSize, null, cancellationToken);
 
         public virtual async Task<IEnumerable<T>> GetUnsafe(IVQSpec<T> spec, CancellationToken cancellationToken = default) => await SetSpecificationUnsafe(spec).ToListAsync(cancellationToken);
 
-        public virtual Task<IPagedList<T>> GetUnsafe(IVQSpec<T> spec, int pageNumber, int pageSize, CancellationToken cancellationToken = default) => SetSpecificationUnsafe(spec).ToPagedListAsync(pageNumber, pageSize, cancellationToken);
+        public virtual Task<IPagedList<T>> GetUnsafe(IVQSpec<T> spec, int pageNumber, int pageSize, CancellationToken cancellationToken = default) => SetSpecificationUnsafe(spec).ToPagedListAsync(pageNumber, pageSize, null, cancellationToken);
 
         public virtual async Task<IEnumerable<TDest>> GetUnsafe<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default) => await SetSpecificationUnsafe(spec).ToListAsync(cancellationToken);
 
-        public virtual Task<IPagedList<TDest>> GetUnsafe<TDest>(IVQSpecTo<T, TDest> spec, int pageNumber, int pageSize, CancellationToken cancellationToken = default) => SetSpecificationUnsafe(spec).ToPagedListAsync(pageNumber, pageSize, cancellationToken);
+        public virtual Task<IPagedList<TDest>> GetUnsafe<TDest>(IVQSpecTo<T, TDest> spec, int pageNumber, int pageSize, CancellationToken cancellationToken = default) => SetSpecificationUnsafe(spec).ToPagedListAsync(pageNumber, pageSize, null, cancellationToken);
 
         #endregion Get
 
