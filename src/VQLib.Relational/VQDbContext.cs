@@ -56,7 +56,13 @@ namespace VQLib.Relational
                 if (hasDeletedColumn)
                 {
                     entry.State = EntityState.Modified;
-                    entry.CurrentValues[IS_DELETED_COLUMN_NAME] = true;
+                    foreach (var prop in entry.Properties)
+                    {
+                        var isDeletedColumn = prop.Metadata.Name == IS_DELETED_COLUMN_NAME;
+                        prop.IsModified = isDeletedColumn;
+                        if (isDeletedColumn)
+                            prop.CurrentValue = true;
+                    }
                 }
             }
         }

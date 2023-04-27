@@ -168,14 +168,14 @@ namespace VQLib.Relational.Repository
 
         public virtual async Task<int> Delete(long id, bool saveChanges, CancellationToken cancellationToken = default)
         {
-            var entity = await _dbContext.Set<T>().FindAsync(new object[] { id }, cancellationToken);
+            var entity = await GetCollection().Where(x => x.Id == id).FirstOrDefaultAsync(cancellationToken);
             if (entity == null)
                 return 0;
             _dbContext.Set<T>().Remove(entity);
             if (saveChanges)
                 return await _dbContext.SaveChangesAsync(cancellationToken);
             else
-                return 0;
+                return 1;
         }
 
         public virtual async Task<int> Delete(IEnumerable<long> ids, CancellationToken cancellationToken = default)
@@ -185,12 +185,12 @@ namespace VQLib.Relational.Repository
 
         public virtual async Task<int> Delete(IEnumerable<long> ids, bool saveChanges, CancellationToken cancellationToken = default)
         {
-            var entities = await _dbContext.Set<T>().Where(x => ids.Contains(x.Id)).ToListAsync();
+            var entities = await GetCollection().Where(x => ids.Contains(x.Id)).ToListAsync();
             _dbContext.Set<T>().RemoveRange(entities);
             if (saveChanges)
                 return await _dbContext.SaveChangesAsync(cancellationToken);
             else
-                return 0;
+                return entities.Count;
         }
 
         #endregion Delete
