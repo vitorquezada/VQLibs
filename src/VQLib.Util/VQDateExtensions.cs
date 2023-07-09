@@ -2,55 +2,94 @@
 {
     public static class VQDateExtensions
     {
-        public static DateOnly GetNextUtilDay(DateOnly date, int count = 0)
+        public static void Deconstruct(this DateOnly date, out int year, out int month, out int day)
         {
-            var utilDate = date;
+            year = date.Year;
+            month = date.Month;
+            day = date.Day;
+        }
 
-            while (utilDate.DayOfWeek == DayOfWeek.Sunday || utilDate.DayOfWeek == DayOfWeek.Saturday)
-                utilDate = utilDate.AddDays(1);
+        public static DateOnly GetNextBusinessDay(
+            this DateOnly date,
+            int count = 0,
+            bool saturdayIsBusinessDay = false,
+            bool sundayIsBusinessDay = false,
+            HashSet<DateOnly>? holidays = null)
+        {
+            var auxDate = date;
+
+            while (auxDate.IsNotBusinessDay(saturdayIsBusinessDay, sundayIsBusinessDay, holidays))
+                auxDate = auxDate.AddDays(1);
 
             while (count > 0)
             {
-                utilDate = utilDate.AddDays(1);
+                auxDate = auxDate.AddDays(1);
                 count--;
-                while (utilDate.DayOfWeek == DayOfWeek.Sunday || utilDate.DayOfWeek == DayOfWeek.Saturday)
-                    utilDate = utilDate.AddDays(1);
+                while (auxDate.IsNotBusinessDay(saturdayIsBusinessDay, sundayIsBusinessDay, holidays))
+                    auxDate = auxDate.AddDays(1);
             }
 
-            return utilDate;
+            return auxDate;
         }
 
-        public static DateOnly GetPreviousUtilDay(DateOnly date, int count = 0)
+        public static DateOnly GetPreviousBusinessDay(
+            this DateOnly date,
+            int count = 0,
+            bool saturdayIsBusinessDay = false,
+            bool sundayIsBusinessDay = false,
+            HashSet<DateOnly>? holidays = null)
         {
-            var utilDate = date;
+            var auxDate = date;
 
-            while (utilDate.DayOfWeek == DayOfWeek.Sunday || utilDate.DayOfWeek == DayOfWeek.Saturday)
-                utilDate = utilDate.AddDays(-1);
+            while (auxDate.IsNotBusinessDay(saturdayIsBusinessDay, sundayIsBusinessDay, holidays))
+                auxDate = auxDate.AddDays(-1);
 
             while (count > 0)
             {
-                utilDate = utilDate.AddDays(-1);
+                auxDate = auxDate.AddDays(-1);
                 count--;
 
-                while (utilDate.DayOfWeek == DayOfWeek.Sunday || utilDate.DayOfWeek == DayOfWeek.Saturday)
-                    utilDate = utilDate.AddDays(-1);
+                while (auxDate.IsNotBusinessDay(saturdayIsBusinessDay, sundayIsBusinessDay, holidays))
+                    auxDate = auxDate.AddDays(-1);
             }
 
-            return utilDate;
+            return auxDate;
         }
 
-        public static DateOnly GetStartDateConsideringHolidaysWeekend(DateOnly data)
+        public static DateOnly GetStartDateConsideringHolidaysWeekend(
+            this DateOnly data,
+            bool saturdayIsBusinessDay = false,
+            bool sundayIsBusinessDay = false,
+            HashSet<DateOnly>? holidays = null)
         {
             var startDate = data;
             var previousDate = startDate.AddDays(-1);
 
-            while (previousDate.DayOfWeek == DayOfWeek.Sunday || previousDate.DayOfWeek == DayOfWeek.Saturday /* || Feriado*/)
+            while (previousDate.IsNotBusinessDay(saturdayIsBusinessDay, sundayIsBusinessDay, holidays))
             {
                 startDate = previousDate;
                 previousDate = previousDate.AddDays(-1);
             }
 
             return startDate;
+        }
+
+        public static bool IsBusinessDay(this DateOnly date,
+            bool saturdayIsBusinessDay = false,
+            bool sundayIsBusinessDay = false,
+            HashSet<DateOnly>? holidays = null)
+        {
+            return (date.DayOfWeek != DayOfWeek.Sunday || sundayIsBusinessDay)
+                && (date.DayOfWeek != DayOfWeek.Saturday || saturdayIsBusinessDay)
+                && (holidays == null || !holidays.Contains(date));
+        }
+
+        public static bool IsNotBusinessDay(this DateOnly date,
+            bool saturdayIsBusinessDay = false,
+            bool sundayIsBusinessDay = false,
+            HashSet<DateOnly>? holidays = null)
+        {
+            return !IsBusinessDay(date, saturdayIsBusinessDay, sundayIsBusinessDay, holidays);
         }
 
         public static DateOnly ToDateOnly(this DateTime date)
