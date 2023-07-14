@@ -58,12 +58,40 @@ namespace VQLib.Crypt
             return ms.ToArray();
         }
 
+        public static string Encrypt(this string text, SymmetricAlgorithm alg)
+        {
+            var bytes = text.StringToUtf8Byte();
+            return Encrypt(bytes, alg).Utf8ByteToString();
+        }
+
+        public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm alg)
+        {
+            using var ms = new MemoryStream();
+            using var cs = new CryptoStream(ms, alg.CreateEncryptor(), CryptoStreamMode.Write);
+            cs.Write(bytes, 0, bytes.Length);
+            return ms.ToArray();
+        }
+
         public static byte[] Decrypt<T>(this byte[] bytes, byte[] key, byte[] iv) where T : SymmetricAlgorithm, new()
         {
             using var alg = new T();
             alg.Key = key;
             alg.IV = iv;
 
+            using var ms = new MemoryStream();
+            using var cs = new CryptoStream(ms, alg.CreateDecryptor(), CryptoStreamMode.Read);
+            cs.Read(bytes, 0, bytes.Length);
+            return ms.ToArray();
+        }
+
+        public static string Decrypt(this string text, SymmetricAlgorithm alg)
+        {
+            var bytes = text.StringToUtf8Byte();
+            return Decrypt(bytes, alg).Utf8ByteToString();
+        }
+
+        public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm alg)
+        {
             using var ms = new MemoryStream();
             using var cs = new CryptoStream(ms, alg.CreateDecryptor(), CryptoStreamMode.Read);
             cs.Read(bytes, 0, bytes.Length);
