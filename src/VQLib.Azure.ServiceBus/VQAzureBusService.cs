@@ -95,9 +95,16 @@ namespace VQLib.Azure.ServiceBus
             var client = GetClient();
             await using var sender = client.CreateSender(_configuration.QueueNameOrTopic);
 
+            long MAX_BYTES = Convert.ToInt64(Math.Round(0.8 * 256 * 1024));
+
+            var batchOptions = new CreateMessageBatchOptions
+            {
+                MaxSizeInBytes = MAX_BYTES
+            };
+
             var list = new List<ServiceBusMessageBatch>()
             {
-                await sender.CreateMessageBatchAsync()
+                await sender.CreateMessageBatchAsync(batchOptions)
             };
             foreach (var item in dataList)
             {
@@ -109,7 +116,7 @@ namespace VQLib.Azure.ServiceBus
                 if (list[^1].TryAddMessage(message))
                     continue;
 
-                list.Add(await sender.CreateMessageBatchAsync());
+                list.Add(await sender.CreateMessageBatchAsync(batchOptions));
                 if (list[^1].TryAddMessage(message))
                     continue;
 
@@ -118,8 +125,15 @@ namespace VQLib.Azure.ServiceBus
 
             foreach (var batch in list)
             {
-                using var batchUsing = batch;
-                await sender.SendMessagesAsync(batchUsing);
+                try
+                {
+                    using var batchUsing = batch;
+                    await sender.SendMessagesAsync(batchUsing);
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
             }
         }
 
