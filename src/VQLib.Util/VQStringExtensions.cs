@@ -125,12 +125,16 @@ namespace VQLib.Util
 
         public static string FormatCNPJ(this string CNPJ)
         {
-            return Convert.ToUInt64(CNPJ).ToString("00'.'000'.'000'/'0000'-'00");
+            if (!CNPJ.CnpjIsValid()) throw new FormatException($"CNPJ \"{CNPJ}\" is not valid.");
+
+            return Convert.ToUInt64(CNPJ.OnlyNumbers()).ToString("00'.'000'.'000'/'0000'-'00");
         }
 
         public static string FormatCPF(this string CPF)
         {
-            return Convert.ToUInt64(CPF).ToString("000'.'000'.'000'-'00");
+            if (!CPF.CpfIsValid()) throw new FormatException($"CPF \"{CPF}\" is not valid.");
+
+            return Convert.ToUInt64(CPF.OnlyNumbers()).ToString("000'.'000'.'000'-'00");
         }
 
         public static T? FromJson<T>(this string? value, JsonSerializerOptions? options = null)
