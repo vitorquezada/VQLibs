@@ -176,7 +176,7 @@ namespace VQLib.Util
 
         public static string? IsNullOrWhiteSpaceOr(this string? text, string? then) => !string.IsNullOrWhiteSpace(text) ? text : then;
 
-        public static string OnlyNumbers(this string text)
+        public static string? OnlyNumbers(this string? text)
         {
             if (string.IsNullOrEmpty(text))
                 return text;
