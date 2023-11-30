@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -170,9 +171,9 @@ namespace VQLib.Util
             return Regex.Replace(Regex.Replace(email, group1, m => new string('*', m.Length)), group2, m => new string('*', m.Length));
         }
 
-        public static bool IsNotNullOrWhiteSpace(this string? text) => !string.IsNullOrWhiteSpace(text);
+        public static bool IsNotNullOrWhiteSpace([NotNullWhen(true)] this string? text) => !string.IsNullOrWhiteSpace(text);
 
-        public static bool IsNullOrWhiteSpace(this string? text) => string.IsNullOrWhiteSpace(text);
+        public static bool IsNullOrWhiteSpace([NotNullWhen(false)] this string? text) => string.IsNullOrWhiteSpace(text);
 
         public static string? IsNullOrWhiteSpaceOr(this string? text, string? then) => !string.IsNullOrWhiteSpace(text) ? text : then;
 
