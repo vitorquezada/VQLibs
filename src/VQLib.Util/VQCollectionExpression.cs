@@ -4,7 +4,7 @@ namespace VQLib.Util
 {
     public static class VQCollectionExpression
     {
-        public static bool ListHasItem<T>([NotNullWhen(true)] this IEnumerable<T> list, Func<T, bool>? filter = null)
+        public static bool ListHasItem<T>([NotNullWhen(true)] this IEnumerable<T>? list, Func<T, bool>? filter = null)
         {
             return list != null && (filter == null ? list.Any() : list.Any(filter));
         }
