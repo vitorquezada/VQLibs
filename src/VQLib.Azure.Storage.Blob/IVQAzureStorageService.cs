@@ -25,6 +25,8 @@ namespace VQLib.Azure.Storage.Blob
             string? ContentType = null,
             IDictionary<string, string>? tags = null,
             TimeSpan? timeout = null,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken = default,
+            int? maxConcurrency = null,
+            int bufferSize = 100 * 1024 * 1024);
     }
 }

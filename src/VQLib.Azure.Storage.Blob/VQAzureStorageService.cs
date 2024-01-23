@@ -94,17 +94,18 @@ namespace VQLib.Azure.Storage.Blob
             string? ContentType = null,
             IDictionary<string, string>? tags = null,
             TimeSpan? timeout = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            int? maxConcurrency = null,
+            int bufferSize = 100 * 1024 * 1024)
         {
+            data.ThrowIfNull(nameof(data));
+
             using var memory = new MemoryStream();
-            if (data != null)
-            {
-                data.Seek(0, SeekOrigin.Begin);
-                await data.CopyToAsync(memory, cancellationToken);
-                await memory.FlushAsync(cancellationToken);
-                data.Seek(0, SeekOrigin.Begin);
-                memory.Seek(0, SeekOrigin.Begin);
-            }
+            data.Seek(0, SeekOrigin.Begin);
+            await data.CopyToAsync(memory, cancellationToken);
+            await memory.FlushAsync(cancellationToken);
+            data.Seek(0, SeekOrigin.Begin);
+            memory.Seek(0, SeekOrigin.Begin);
 
             var (containerName, filePath) = SplitKey(key);
 
@@ -117,13 +118,16 @@ namespace VQLib.Azure.Storage.Blob
 
             var blob = container.GetBlobClient(filePath);
 
+            if (!maxConcurrency.HasValue)
+                maxConcurrency = 2 * Environment.ProcessorCount;
+
             var optionsUpload = new BlobUploadOptions
             {
                 TransferOptions = new StorageTransferOptions
                 {
-                    MaximumConcurrency = 2 * Environment.ProcessorCount,
-                    InitialTransferSize = 100 * 1024 * 1024,
-                    MaximumTransferSize = 100 * 1024 * 1024,
+                    MaximumConcurrency = maxConcurrency,
+                    InitialTransferSize = bufferSize,
+                    MaximumTransferSize = bufferSize,
                 },
             };
             await blob.UploadAsync(data, optionsUpload, cancellationToken);
