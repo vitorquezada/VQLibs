@@ -18,85 +18,134 @@ namespace VQLib.Crypt
 
         public static string AsciiByteToString(this byte[] bytes) => bytes != null ? Encoding.ASCII.GetString(bytes) : string.Empty;
 
+        #region MD5
+
         public static string GetMd5Hash(this string text) => GetMd5Hash(StringToUtf8Byte(text));
+
+        public static async Task<string> GetMd5HashAsync(this string text) => await GetMd5HashAsync(StringToUtf8Byte(text));
 
         public static string GetMd5Hash(this byte[] bytes)
         {
-            using var hashAlgorithm = new MD5CryptoServiceProvider();
+            using var hashAlgorithm = MD5.Create();
             return GetHash(bytes, hashAlgorithm);
         }
+
+        public static async Task<string> GetMd5HashAsync(this byte[] bytes)
+        {
+            using var hashAlgorithm = MD5.Create();
+            return await GetHashAsync(bytes, hashAlgorithm);
+        }
+
+        #endregion MD5
+
+        #region SHA256
 
         public static string GetSha256Hash(this string text) => GetSha256Hash(StringToUtf8Byte(text));
 
-        public static string GetSha256Hash(this byte[] bytes)
+        public static async Task<string> GetSha256HashAsync(this string text) => await GetSha256HashAsync(StringToUtf8Byte(text));
+
+        public static string GetSha256Hash(this byte[] bytes) => GetSha256HashAsync(bytes).ConfigureAwait(false).GetAwaiter().GetResult();
+
+        public static async Task<string> GetSha256HashAsync(this byte[] bytes)
         {
-            using var hashAlgorithm = new SHA256Managed();
-            return GetHash(bytes, hashAlgorithm);
+            using var hashAlgorithm = SHA256.Create();
+            return await GetHashAsync(bytes, hashAlgorithm);
         }
 
-        public static string GetHash<T>(this byte[] bytes, T hashAlgorithm) where T : HashAlgorithm, new()
+        #endregion SHA256
+
+        #region HASH
+
+        public static string GetHash<T>(this byte[] bytes, T hashAlgorithm) where T : HashAlgorithm => GetHashAsync(bytes, hashAlgorithm).ConfigureAwait(false).GetAwaiter().GetResult();
+
+        public static async Task<string> GetHashAsync<T>(this byte[] bytes, T hashAlgorithm) where T : HashAlgorithm
         {
-            hashAlgorithm.ComputeHash(bytes);
+            using var ms = new MemoryStream(bytes);
+            await hashAlgorithm.ComputeHashAsync(ms);
+            ArgumentNullException.ThrowIfNull(hashAlgorithm.Hash);
             return BitConverter.ToString(hashAlgorithm.Hash).Replace(BYTE_SEPARATOR, STRING_EMPTY);
         }
 
-        public static string EncryptAes(this string text, string key, string iv)
-            => Convert.ToBase64String(Encrypt<AesCryptoServiceProvider>(text.StringToUtf8Byte(), key.StringToUtf8Byte(), iv.StringToUtf8Byte()));
+        #endregion HASH
 
-        public static string DecryptAes(this string crypt, string key, string iv)
-            => Decrypt<AesCryptoServiceProvider>(Convert.FromBase64String(crypt), key.StringToUtf8Byte(), iv.StringToUtf8Byte()).Utf8ByteToString();
+        #region AES
 
-        public static byte[] Encrypt<T>(this byte[] bytes, byte[] key, byte[] iv) where T : SymmetricAlgorithm, new()
+        public static string EncryptAes(this string text, string key, string iv) => EncryptAes(text, key.StringToUtf8Byte(), iv.StringToUtf8Byte());
+
+        public static async Task<string> EncryptAesAsync(this string text, string key, string iv) => await EncryptAesAsync(text, key.StringToUtf8Byte(), iv.StringToUtf8Byte());
+
+        public static string EncryptAes(this string text, byte[] key, byte[] iv) => EncryptAesAsync(text, key, iv).ConfigureAwait(false).GetAwaiter().GetResult();
+
+        public static async Task<string> EncryptAesAsync(this string text, byte[] key, byte[] iv)
         {
-            using var alg = new T();
+            using var alg = Aes.Create();
             alg.Key = key;
             alg.IV = iv;
-
-            using var ms = new MemoryStream();
-            using var cs = new CryptoStream(ms, alg.CreateEncryptor(), CryptoStreamMode.Write);
-            cs.Write(bytes, 0, bytes.Length);
-            return ms.ToArray();
+            alg.Mode = CipherMode.CBC;
+            alg.Padding = PaddingMode.PKCS7;
+            return Convert.ToBase64String(await EncryptAsync(text.StringToUtf8Byte(), alg));
         }
 
-        public static string Encrypt(this string text, SymmetricAlgorithm alg)
-        {
-            var bytes = text.StringToUtf8Byte();
-            return Encrypt(bytes, alg).Utf8ByteToString();
-        }
+        public static string DecryptAes(this string crypt, string key, string iv) => DecryptAes(crypt, key.StringToUtf8Byte(), iv.StringToUtf8Byte());
 
-        public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm alg)
-        {
-            using var ms = new MemoryStream();
-            using var cs = new CryptoStream(ms, alg.CreateEncryptor(), CryptoStreamMode.Write);
-            cs.Write(bytes, 0, bytes.Length);
-            return ms.ToArray();
-        }
+        public static async Task<string> DecryptAesAsync(this string crypt, string key, string iv) => await DecryptAesAsync(crypt, key.StringToUtf8Byte(), iv.StringToUtf8Byte());
 
-        public static byte[] Decrypt<T>(this byte[] bytes, byte[] key, byte[] iv) where T : SymmetricAlgorithm, new()
+        public static string DecryptAes(this string crypt, byte[] key, byte[] iv) => DecryptAesAsync(crypt, key, iv).ConfigureAwait(false).GetAwaiter().GetResult();
+
+        public static async Task<string> DecryptAesAsync(this string crypt, byte[] key, byte[] iv)
         {
-            using var alg = new T();
+            using var alg = Aes.Create();
             alg.Key = key;
             alg.IV = iv;
+            alg.Mode = CipherMode.CBC;
+            alg.Padding = PaddingMode.PKCS7;
+            return (await DecryptAsync(Convert.FromBase64String(crypt), alg)).Utf8ByteToString();
+        }
 
+        #endregion AES
+
+        #region SYMMETRIC_ALG
+
+        public static string Encrypt(this string text, SymmetricAlgorithm alg) => Convert.ToBase64String(Encrypt(text.StringToUtf8Byte(), alg));
+
+        public static async Task<string> EncryptAsync(this string text, SymmetricAlgorithm alg) => Convert.ToBase64String(await EncryptAsync(text.StringToUtf8Byte(), alg));
+
+        public static byte[] Encrypt(this byte[] bytes, SymmetricAlgorithm alg) => EncryptAsync(bytes, alg).ConfigureAwait(false).GetAwaiter().GetResult();
+
+        public static async Task<byte[]> EncryptAsync(this byte[] bytes, SymmetricAlgorithm alg)
+        {
             using var ms = new MemoryStream();
-            using var cs = new CryptoStream(ms, alg.CreateDecryptor(), CryptoStreamMode.Read);
-            cs.Read(bytes, 0, bytes.Length);
+
+            using (var enc = alg.CreateEncryptor())
+            using (var cs = new CryptoStream(ms, enc, CryptoStreamMode.Write))
+            {
+                await cs.WriteAsync(bytes, 0, bytes.Length);
+            }
+
             return ms.ToArray();
         }
 
-        public static string Decrypt(this string text, SymmetricAlgorithm alg)
+        public static string Decrypt(this string text, SymmetricAlgorithm alg) => Decrypt(Convert.FromBase64String(text), alg).Utf8ByteToString();
+
+        public static async Task<string> DecryptAsync(this string text, SymmetricAlgorithm alg) => (await DecryptAsync(Convert.FromBase64String(text), alg)).Utf8ByteToString();
+
+        public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm alg) => DecryptAsync(bytes, alg).ConfigureAwait(false).GetAwaiter().GetResult();
+
+        public static async Task<byte[]> DecryptAsync(this byte[] bytes, SymmetricAlgorithm alg)
         {
-            var bytes = text.StringToUtf8Byte();
-            return Decrypt(bytes, alg).Utf8ByteToString();
+            using var msDecrypted = new MemoryStream();
+
+            using (var msEncrypted = new MemoryStream(bytes))
+            using (var enc = alg.CreateDecryptor())
+            using (var cs = new CryptoStream(msEncrypted, enc, CryptoStreamMode.Read))
+            {
+                await cs.CopyToAsync(msDecrypted);
+            }
+
+            return msDecrypted.ToArray();
         }
 
-        public static byte[] Decrypt(this byte[] bytes, SymmetricAlgorithm alg)
-        {
-            using var ms = new MemoryStream();
-            using var cs = new CryptoStream(ms, alg.CreateDecryptor(), CryptoStreamMode.Read);
-            cs.Read(bytes, 0, bytes.Length);
-            return ms.ToArray();
-        }
+        #endregion SYMMETRIC_ALG
 
         public static string GetHashArgon(
             this string text,
