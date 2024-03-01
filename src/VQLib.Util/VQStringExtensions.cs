@@ -18,6 +18,7 @@ namespace VQLib.Util
             AllowTrailingCommas = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             NumberHandling = JsonNumberHandling.AllowReadingFromString,
+            ReferenceHandler = ReferenceHandler.IgnoreCycles,
             Converters =
             {
                 new DateOnlyJsonConverter(),
