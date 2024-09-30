@@ -14,7 +14,7 @@
     <PackageReference Include="SendGrid" Version="9.28.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.6.104" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.29.0" />
-    <PackageReference Include="X.PagedList" Version="8.4.7" />
+    <PackageReference Include="X.PagedList" Version="10.2.1" />
   </ItemGroup>
 
   <ItemGroup>
