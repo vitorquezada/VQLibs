@@ -3,6 +3,7 @@ using VQLib.Relational.Entity;
 using VQLib.Relational.Specification;
 using VQLib.Session;
 using X.PagedList;
+using X.PagedList.EF;
 
 namespace VQLib.Relational.Repository
 {

@@ -1,19 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Azure.Messaging.EventHubs" Version="5.9.3" />
-    <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.9.3" />
-	<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Azure.Messaging.EventHubs" Version="5.11.5" />
+    <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.11.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\VQLib.Util\VQLib.Util.csproj" />
   </ItemGroup>
-
 </Project>

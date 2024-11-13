@@ -1,17 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="StackExchange.Redis" Version="2.6.104" />
+    <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\VQLib.Util\VQLib.Util.csproj" />
   </ItemGroup>
-
 </Project>

@@ -1,18 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="AWSSDK.SQS" Version="3.7.100.43" />
+    <PackageReference Include="AWSSDK.SQS" Version="3.7.400.49" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\VQLib.Aws\VQLib.Aws.csproj" />
     <ProjectReference Include="..\VQLib.Util\VQLib.Util.csproj" />
   </ItemGroup>
-
 </Project>
