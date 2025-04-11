@@ -5,6 +5,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="libsodium" Version="1.0.20" />
+    <PackageReference Include="libsodium" Version="1.0.20.1" />
   </ItemGroup>
 </Project>

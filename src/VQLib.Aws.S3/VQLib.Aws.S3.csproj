@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.7.405.13" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.412.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VQLib.Aws\VQLib.Aws.csproj" />
