@@ -214,11 +214,7 @@ namespace VQLib.Relational.Repository
 
         private async Task<T> InternalInsertUpdate(T entity, bool saveChanges, bool exist, CancellationToken cancellationToken = default)
         {
-            if (exist)
-            {
-                _dbContext.Set<T>().Update(entity);
-            }
-            else
+            if (!exist)
             {
                 await _dbContext.Set<T>().AddAsync(entity, cancellationToken);
             }
