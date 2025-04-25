@@ -68,21 +68,21 @@ namespace VQLib.Relational.Repository
 
         #region First
 
-        public virtual Task<T> First(IVQSpec<T> spec, CancellationToken cancellationToken = default) => SetSpecification(spec).FirstOrDefaultAsync(cancellationToken);
+        public virtual Task<T?> First(IVQSpec<T> spec, CancellationToken cancellationToken = default) => SetSpecification(spec).FirstOrDefaultAsync(cancellationToken);
 
-        public virtual Task<TDest> First<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default) => SetSpecification(spec).FirstOrDefaultAsync(cancellationToken);
+        public virtual Task<TDest?> First<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default) => SetSpecification(spec).FirstOrDefaultAsync(cancellationToken);
 
-        public virtual Task<T> FirstUnsafe(IVQSpec<T> spec, CancellationToken cancellationToken = default) => SetSpecificationUnsafe(spec).FirstOrDefaultAsync(cancellationToken);
+        public virtual Task<T?> FirstUnsafe(IVQSpec<T> spec, CancellationToken cancellationToken = default) => SetSpecificationUnsafe(spec).FirstOrDefaultAsync(cancellationToken);
 
-        public virtual Task<TDest> FirstUnsafe<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default) => SetSpecificationUnsafe(spec).FirstOrDefaultAsync(cancellationToken);
+        public virtual Task<TDest?> FirstUnsafe<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default) => SetSpecificationUnsafe(spec).FirstOrDefaultAsync(cancellationToken);
 
         #endregion First
 
         #region Get
 
-        public virtual Task<T> Get(long id, CancellationToken cancellationToken = default) => GetCollection().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        public virtual Task<T?> Get(long id, CancellationToken cancellationToken = default) => GetCollection().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-        public virtual Task<T> Get(string key, CancellationToken cancellationToken = default) => GetCollection().FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
+        public virtual Task<T?> Get(string key, CancellationToken cancellationToken = default) => GetCollection().FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
 
         public virtual async Task<IEnumerable<T>> Get(CancellationToken cancellationToken = default) => await GetCollection().ToListAsync(cancellationToken);
 
@@ -98,9 +98,9 @@ namespace VQLib.Relational.Repository
 
         public Task<long> GetIdByKey(string key, CancellationToken cancellationToken = default) => GetCollectionUnsafe().Where(x => x.Key == key).Select(x => x.Id).FirstOrDefaultAsync();
 
-        public virtual Task<T> GetUnsafe(long id, CancellationToken cancellationToken = default) => GetCollectionUnsafe().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        public virtual Task<T?> GetUnsafe(long id, CancellationToken cancellationToken = default) => GetCollectionUnsafe().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-        public virtual Task<T> GetUnsafe(string key, CancellationToken cancellationToken = default) => GetCollectionUnsafe().FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
+        public virtual Task<T?> GetUnsafe(string key, CancellationToken cancellationToken = default) => GetCollectionUnsafe().FirstOrDefaultAsync(x => x.Key == key, cancellationToken);
 
         public virtual async Task<IEnumerable<T>> GetUnsafe(CancellationToken cancellationToken = default) => await GetCollectionUnsafe().ToListAsync(cancellationToken);
 
@@ -169,9 +169,19 @@ namespace VQLib.Relational.Repository
 
         public virtual async Task<int> Delete(long id, bool saveChanges, CancellationToken cancellationToken = default)
         {
-            var entity = await GetCollection().Where(x => x.Id == id).FirstOrDefaultAsync(cancellationToken);
+            var entity = await Get(id, cancellationToken);
             if (entity == null)
                 return 0;
+            return await Delete(entity, saveChanges, cancellationToken);
+        }
+
+        public virtual async Task<int> Delete(T id, CancellationToken cancellationToken = default)
+        {
+            return await Delete(id, true, cancellationToken);
+        }
+
+        public virtual async Task<int> Delete(T entity, bool saveChanges, CancellationToken cancellationToken = default)
+        {
             _dbContext.Set<T>().Remove(entity);
             if (saveChanges)
                 return await _dbContext.SaveChangesAsync(cancellationToken);
@@ -187,11 +197,22 @@ namespace VQLib.Relational.Repository
         public virtual async Task<int> Delete(IEnumerable<long> ids, bool saveChanges, CancellationToken cancellationToken = default)
         {
             var entities = await GetCollection().Where(x => ids.Contains(x.Id)).ToListAsync();
+            return await Delete(entities, saveChanges, cancellationToken);
+        }
+
+        public virtual async Task<int> Delete(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            return await Delete(entities, true, cancellationToken);
+        }
+
+
+        public virtual async Task<int> Delete(IEnumerable<T> entities, bool saveChanges, CancellationToken cancellationToken = default)
+        {
             _dbContext.Set<T>().RemoveRange(entities);
             if (saveChanges)
                 return await _dbContext.SaveChangesAsync(cancellationToken);
             else
-                return entities.Count;
+                return entities.Count();
         }
 
         #endregion Delete

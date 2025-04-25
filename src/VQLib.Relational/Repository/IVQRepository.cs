@@ -19,13 +19,13 @@ namespace VQLib.Relational.Repository
 
         Task<long> CountUnsafe(IVQSpec<T> spec, CancellationToken cancellationToken = default);
 
-        Task<T> FirstUnsafe(IVQSpec<T> spec, CancellationToken cancellationToken = default);
+        Task<T?> FirstUnsafe(IVQSpec<T> spec, CancellationToken cancellationToken = default);
 
-        Task<TDest> FirstUnsafe<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default);
+        Task<TDest?> FirstUnsafe<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default);
 
-        Task<T> GetUnsafe(long id, CancellationToken cancellationToken = default);
+        Task<T?> GetUnsafe(long id, CancellationToken cancellationToken = default);
 
-        Task<T> GetUnsafe(string key, CancellationToken cancellationToken = default);
+        Task<T?> GetUnsafe(string key, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<T>> GetUnsafe(CancellationToken cancellationToken = default);
 
@@ -62,13 +62,21 @@ namespace VQLib.Relational.Repository
 
         Task<int> Delete(IEnumerable<long> ids, bool saveChanges, CancellationToken cancellationToken = default);
 
-        Task<T> First(IVQSpec<T> spec, CancellationToken cancellationToken = default);
+        Task<int> Delete(T entity, CancellationToken cancellationToken = default);
 
-        Task<TDest> First<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default);
+        Task<int> Delete(T entity, bool saveChanges, CancellationToken cancellationToken = default);
 
-        Task<T> Get(long id, CancellationToken cancellationToken = default);
+        Task<int> Delete(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
-        Task<T> Get(string key, CancellationToken cancellationToken = default);
+        Task<int> Delete(IEnumerable<T> entities, bool saveChanges, CancellationToken cancellationToken = default);
+
+        Task<T?> First(IVQSpec<T> spec, CancellationToken cancellationToken = default);
+
+        Task<TDest?> First<TDest>(IVQSpecTo<T, TDest> spec, CancellationToken cancellationToken = default);
+
+        Task<T?> Get(long id, CancellationToken cancellationToken = default);
+
+        Task<T?> Get(string key, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<T>> Get(CancellationToken cancellationToken = default);
 
