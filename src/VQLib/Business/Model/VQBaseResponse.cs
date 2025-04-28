@@ -33,7 +33,7 @@ namespace VQLib.Business.Model
         {
         }
 
-        public List<VQValidationItem> Validations { get; private set; } = new List<VQValidationItem>();
+        public List<VQValidationItem> Validations { get; set; } = new List<VQValidationItem>();
 
         public bool HasErrorValidations { get => Validations.ListHasItem(x => x.Type == VQValidationType.Error); }
 
